@@ -1,4 +1,4 @@
-package Diplo10.diplo10.Entity;
+package Diplo10.Entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

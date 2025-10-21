@@ -1,4 +1,4 @@
-package Diplo10.diplo10;
+package Diplo10;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

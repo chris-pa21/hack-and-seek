@@ -1,4 +1,4 @@
-package Diplo10.diplo10;
+package Diplo10;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -8,6 +8,8 @@ import java.util.Optional;
 
 @Repository
 public interface PlayerRepository extends JpaRepository<Player, String>{
-    Optional<Player> findByUsername(String username);
+    Optional<Player> findByPlayer(String username);
+
+    Optional<Object> findByEmail(String email);
 }
 

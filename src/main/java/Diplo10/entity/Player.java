@@ -16,8 +16,6 @@ import lombok.*;
 public class Player {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-
     private String player;
 
     private String password;
@@ -30,13 +28,10 @@ public class Player {
 
 
     public Player(String name, String password, String email){
-        this.id = (int) (Math.random() * 1000);
         this.player = name;
         this.password = password;
         this.email = email;
         this.points = 0;
 
     }
-
-
 }

@@ -19,13 +19,16 @@ public class AuthController {
     @PostMapping("/register")
     @Transactional
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
-        // minimal validation
-        if (req.player == null || req.player.isBlank() ||
+        if (req.username == null || req.username.isBlank() ||
                 req.password == null || req.password.isBlank()) {
             return ResponseEntity.badRequest().body("player and password required");
         }
 
-        if (playerRepository.findByPlayer(req.player).isPresent()) {
+        if(!req.password.equals(req.confirmPassword)) {
+            return ResponseEntity.badRequest().body("passwords do not match");
+        }
+
+        if (playerRepository.findByPlayer(req.username).isPresent()) {
             return ResponseEntity.status(409).body("player already exists");
         }
         if (req.email != null && !req.email.isBlank()
@@ -35,7 +38,7 @@ public class AuthController {
 
         Player saved = playerRepository.save(
                 new Player(
-                        req.player,
+                        req.username,
                         passwordEncoder.encode(req.password),
                         req.email
                 )
@@ -44,5 +47,5 @@ public class AuthController {
         return ResponseEntity.status(201).body("ok:" + saved.getPlayer());
     }
 
-    public record RegisterRequest(String player, String password, String email) {}
+    public record RegisterRequest(String username, String email, String password, String confirmPassword) {}
 }

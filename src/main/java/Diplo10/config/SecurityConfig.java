@@ -37,6 +37,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    DaoAuthenticationProvider authProvider) throws Exception {
         http
+                .cors(cors -> {})
                 .authenticationProvider(authProvider)
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authz -> authz

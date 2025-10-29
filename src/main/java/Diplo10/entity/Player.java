@@ -15,14 +15,13 @@ import lombok.*;
 
 public class Player {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String player;
 
     private String password;
 
     private String email;
 
-    private int points;
+    private Integer points;
 
     private String vpn_key;
 

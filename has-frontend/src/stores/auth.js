@@ -1,17 +1,18 @@
 // stores/auth.js
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import axios from '@/plugins/axios'
+import router from '@/router'
 
 export const userAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
     isAuthenticated: false,
-    loading: false
+    loading: false,
   }),
 
   getters: {
     currentUser: (state) => state.user,
-    isLoggedIn: (state) => state.isAuthenticated
+    isLoggedIn: (state) => state.isAuthenticated,
   },
 
   actions: {
@@ -19,13 +20,33 @@ export const userAuthStore = defineStore('auth', {
       this.loading = true
       try {
         const response = await axios.post('/api/auth/login', credentials, {
-          withCredentials: true 
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
         })
         this.user = response.data
         this.isAuthenticated = true
-        return response.data
+        return response
       } catch (error) {
         this.isAuthenticated = false
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async register(userData) {
+      this.loading = true
+      try {
+        const response = await axios.post('/api/auth/register', userData, {
+          withCredentials: true,
+        })
+        this.user = response.data
+        this.isAuthenticated = true
+        return response
+      } catch (error) {
+        this.handleAuthError(error)
         throw error
       } finally {
         this.loading = false
@@ -34,9 +55,13 @@ export const userAuthStore = defineStore('auth', {
 
     async logout() {
       try {
-        await axios.post('/api/auth/logout', {}, {
-          withCredentials: true
-        })
+        await axios.post(
+          '/api/auth/logout',
+          {},
+          {
+            withCredentials: true,
+          },
+        )
         this.user = null
         this.isAuthenticated = false
       } catch (error) {
@@ -44,26 +69,10 @@ export const userAuthStore = defineStore('auth', {
       }
     },
 
-    async register(userData) {
-      this.loading = true
-      try {
-        const response = await axios.post('/api/auth/register', userData, {
-          withCredentials: true
-        })
-        this.user = response.data
-        this.isAuthenticated = true
-        return response.data
-      } catch (error) {
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
-
     async checkAuth() {
       try {
         const response = await axios.get('/api/auth/me', {
-          withCredentials: true
+          withCredentials: true,
         })
         this.user = response.data
         this.isAuthenticated = true
@@ -72,16 +81,5 @@ export const userAuthStore = defineStore('auth', {
         this.isAuthenticated = false
       }
     },
-
-    async fetchUserProfile() {
-      try {
-        const response = await axios.get('/api/user/profile', {
-          withCredentials: true
-        })
-        this.user = response.data
-      } catch (error) {
-        console.error('Failed to fetch profile:', error)
-      }
-    }
-  }
+  },
 })

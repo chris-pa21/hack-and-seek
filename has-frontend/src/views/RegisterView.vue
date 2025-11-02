@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { userAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const authStore = userAuthStore() // ✅ Anderer Name!
 
 const username = ref('')
 const password = ref('')
@@ -39,8 +40,9 @@ const register = async () => {
     loading.value = false
     return
   }
+
   try {
-    const response = await userAuthStore.register({
+    const response = await authStore.register({
       username: username.value,
       email: email.value,
       password: password.value,
@@ -49,13 +51,17 @@ const register = async () => {
 
     if (response.status === 201) {
       registered.value = true
-      router.push('/login')
+      setTimeout(() => {
+        router.push('/login')
+      }, 3000)
     }
   } catch (err) {
-    if (err.response && err.response.data && err.response.data.message) {
-      error.value = err.response.data.message
+    if (err.response?.status === 400) {
+      error.value = 'Invalid input data'
+    } else if (err.response?.status === 409) {
+      error.value = 'User already exists'
     } else {
-      error.value = 'An error occurred'
+      error.value = 'Registration failed'
     }
   } finally {
     loading.value = false

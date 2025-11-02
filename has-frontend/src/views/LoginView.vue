@@ -1,10 +1,10 @@
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
 import { useRouter } from 'vue-router'
 import { userAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const authStore = userAuthStore()
 
 const username = ref('')
 const password = ref('')
@@ -20,8 +20,9 @@ const login = async () => {
     loading.value = false
     return
   }
+
   try {
-    const response = await userAuthStore.login({
+    const response = await authStore.login({
       username: username.value,
       password: password.value,
     })
@@ -30,12 +31,11 @@ const login = async () => {
       router.push('/dashboard')
     }
   } catch (err) {
-    if (err.response) {
-      if (err.response.status === 401) {
-        error.value = 'Wrong username and/or password'
-      }
+    console.error('Login error:', err)
+    if (err.response?.status === 401) {
+      error.value = 'Wrong username and/or password'
     } else {
-      error.value = 'An error occured'
+      error.value = 'An error occurred'
     }
   } finally {
     loading.value = false

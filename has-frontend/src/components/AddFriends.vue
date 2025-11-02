@@ -4,8 +4,7 @@ import { ref } from 'vue'
 </script>
 
 <template>
-  <div v-if="userAuthStore.checkAuth" class="bg-[#1F2937]"></div>
-  <div v-else="$router.push('/login')"></div>
+  <h1>Hello</h1>
 </template>
 
 <style scoped></style>

@@ -1,4 +1,4 @@
-package Diplo10.security;
+package Diplo10.config;
 
 import Diplo10.entity.Player;
 import Diplo10.repository.PlayerRepository;

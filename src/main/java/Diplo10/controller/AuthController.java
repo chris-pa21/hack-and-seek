@@ -1,4 +1,4 @@
-package Diplo10.api;
+package Diplo10.controller;
 
 import Diplo10.entity.Player;
 import Diplo10.repository.PlayerRepository;

@@ -13,3 +13,6 @@ Das Problem ist, dass ich zum einen nicht so ein breitreichendes, technisches
 Verstaendnis ueber das Konfigurieren von Netzwerken habe und ich mit
 Wireguard noch nie gearbeitet habe. Ich werde selbstverstaendlich mein bestes
 Versuchen.
+
+Ich habe es jetzt geschafft 2 unterschiedliche Debian Systeme aufzusetzen.
+

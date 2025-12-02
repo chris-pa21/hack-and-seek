@@ -2,18 +2,6 @@
 # 2025-11-18
 
 services:
-  wg-client-1:
-    container_name: "wg-client-1"
-    image: debian:latest
-    command: ["sleep", "infinity"]
-    tty: true
-
-  wg-client-2:
-    container_name: "wg-client-2"
-    image: debian:latest
-    command: ["sleep", "infinity"]
-    tty: true
-
   wireguard-server:
     container_name: "wireguard-server"
     image: lscr.io/linuxserver/wireguard:latest
@@ -28,9 +16,36 @@ services:
       - TZ=Europe/Vienna
       - SERVERURL=127.0.0.1
       - SERVERPORT=51820
-      - PEERS=1
+      - PEERS=2
       - PEERDNS=8.8.8.8
       - INTERNAL_SUBNET=10.8.19.0/24
+    volumes:
       - ./config:/config
     ports:
       - "51820:51820/udp"
+
+  wg-client-1:
+    container_name: "wg-client-1"
+    image: debian:latest
+    command: ["sleep", "infinity"]
+    tty: true
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    volumes:
+      - ./config/peer1/peer1.conf:/etc/wireguard/wg0.conf:ro
+
+  wg-client-2:
+    container_name: "wg-client-2"
+    image: debian:latest
+    command: ["sleep", "infinity"]
+    tty: true
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    volumes:
+      - ./config/peer1/peer1.conf:/etc/wireguard/wg0.conf:ro

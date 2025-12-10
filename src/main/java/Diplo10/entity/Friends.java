@@ -19,7 +19,7 @@ public class Friends {
 
     // Eine Liste aller Freundschaftsbeziehungen, an denen der User beteiligt ist
     // @OneToMany(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OneToMany
+    @ManyToMany
     @ToString.Exclude
     private Set<Player> friends = new HashSet<>();
 

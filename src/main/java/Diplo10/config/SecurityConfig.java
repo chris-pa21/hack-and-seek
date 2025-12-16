@@ -54,9 +54,6 @@ public class SecurityConfig {
                         .logoutUrl("/logout")
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
-                )
-                .sessionManagement(sess -> sess
-                        .maximumSessions(1)
                 );
         return http.build();
     }

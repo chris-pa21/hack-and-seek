@@ -41,7 +41,7 @@ public class SecurityConfig {
                 .authenticationProvider(authProvider)
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/api/auth/**", "/api/friend/**","/api/scoreboard/get").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

@@ -1,4 +1,4 @@
-package Diplo10.Service;
+package Diplo10.service;
 
 import Diplo10.entity.Player;
 import Diplo10.repository.PlayerRepository;

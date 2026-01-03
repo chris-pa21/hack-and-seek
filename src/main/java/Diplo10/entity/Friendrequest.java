@@ -11,14 +11,12 @@ import lombok.*;
 @Setter
 public class Friendrequest {
     @Id
-    @GeneratedValue
-    private int id;
-    @ManyToOne(optional = false)
-    private Player requester;
-    @ManyToOne(optional = false)
-    private Player reciever;
-    private String message;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
 
+    private String requester;
+
+    private String receiver;
 
 }
 

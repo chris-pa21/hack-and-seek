@@ -4,10 +4,14 @@ import Diplo10.entity.Friendrequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
-public interface FriendrequestRepository extends JpaRepository <Friendrequest, Integer>{
-    List<Friendrequest> findByRequesterPlayer (String username);
-    List<Friendrequest> findByRecieverPlayer (String username);
+public interface FriendrequestRepository extends JpaRepository<Friendrequest, Long> {
+    List<Friendrequest> findByRequester(String requester);
 
-    Friendrequest findById (int id);
+    List<Friendrequest> findByReceiver(String receiver);
+
+    Optional<Friendrequest> findById(Long id);
+
+    boolean existsByRequesterAndReceiver(String requester, String receiver);
 }

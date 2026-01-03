@@ -1,15 +1,16 @@
 package Diplo10.controller;
 
-import Diplo10.service.FriendService;
-import Diplo10.service.FriendrequestService;
 import Diplo10.entity.Friendrequest;
 import Diplo10.entity.Player;
-import Diplo10.repository.FriendrequestRepository;
+import Diplo10.service.FriendService;
+import Diplo10.service.FriendrequestService;
+import Diplo10.service.PlayerService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/friend")
@@ -17,49 +18,35 @@ public class FriendController {
 
     private final FriendService friendService;
     private final FriendrequestService friendrequestService;
-    private final FriendrequestRepository friendrequestRepository;
+    private final PlayerService playerService;
 
-    public FriendController(FriendService friendService, FriendrequestService friendrequestService, FriendrequestRepository friendrequestRepository) {
+    public FriendController(FriendService friendService, FriendrequestService friendrequestService, PlayerService playerService) {
+        this.playerService = playerService;
         this.friendService = friendService;
         this.friendrequestService = friendrequestService;
-        this.friendrequestRepository = friendrequestRepository;
     }
 
-    @GetMapping("/get")
-    public ResponseEntity<?> get(@RequestParam String name){
-        try {
-            Set<?> saved = this.friendService.getFriends(name);
-            return ResponseEntity.ok(saved);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public record CreateFriendRequest(String requester, String receiver) {}
+
+    @PostMapping
+    public ResponseEntity<Friendrequest> createFriendRequest(@RequestBody CreateFriendRequest request) {
+        Friendrequest saved = friendrequestService.sendRequest(request.requester(), request.receiver());
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    @PostMapping("/sendRequests")
-    public ResponseEntity<?> sendRequests(@RequestBody Map<String, Player> request, @RequestParam String message) {
-        try {
-            Player player = request.get("player");
-            Player req = request.get("req");
 
-            Friendrequest friendrequest = this.friendrequestService.sendRequest(player,req,message);
-            return ResponseEntity.ok(friendrequest);
+    public record GetFriendRequestsResponse(String username, Integer points) {}
 
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
+    @GetMapping("/requests")
+    public ResponseEntity<List<GetFriendRequestsResponse>> getFriendRequests(@RequestParam String username) {
+        List<GetFriendRequestsResponse> response = new ArrayList<>();
 
-    @PostMapping("/acceptRequest")
-    public ResponseEntity<?> acceptRequest(@RequestParam int id) {
-        try {
-            Friendrequest friendrequest = friendrequestRepository.findById(id);
-            friendService.addFriend(friendrequest.getRequester(), friendrequest.getReciever());
-            return ResponseEntity.status(200).body("ok:");
-
-        }catch(RuntimeException e){
-            return ResponseEntity.badRequest().body(e.getMessage());
+        List<Friendrequest> requests = friendrequestService.getAllFriendRequests(username);
+        for (Friendrequest req : requests) {
+            Player requester = playerService.findByPlayer(req.getRequester());
+            response.add(new GetFriendRequestsResponse(req.getRequester(), requester.getPoints()));
         }
 
+        return ResponseEntity.ok(response);
     }
-
 }

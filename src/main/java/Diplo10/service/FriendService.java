@@ -36,9 +36,13 @@ public class FriendService {
         playerRepository.save(managedReq);
     }
 
+    @Transactional
     public Set<Player> getFriends(String name) {
         return playerRepository.findByPlayer(name)
                 .map(Player::getFriends)
                 .orElseGet(HashSet::new);
     }
+
+
+
 }

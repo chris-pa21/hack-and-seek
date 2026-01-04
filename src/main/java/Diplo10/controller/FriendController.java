@@ -49,4 +49,13 @@ public class FriendController {
 
         return ResponseEntity.ok(response);
     }
+
+
+    public record AcceptFriendRequestRequest(String requester, String accepter) {}
+
+    @PostMapping("/acceptRequest")
+    public ResponseEntity<Void> acceptFriendRequest(@RequestBody AcceptFriendRequestRequest request) {
+        friendService.acceptFriendRequest(request.requester, request.accepter);
+        return ResponseEntity.ok().build();
+    }
 }

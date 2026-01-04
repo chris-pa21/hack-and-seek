@@ -1,10 +1,13 @@
 package Diplo10.service;
 
+import Diplo10.entity.Friendrequest;
 import Diplo10.entity.Player;
+import Diplo10.repository.FriendrequestRepository;
 import Diplo10.repository.PlayerRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.swing.text.html.Option;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -12,28 +15,26 @@ import java.util.Set;
 @Service
 public class FriendService {
     private final PlayerRepository playerRepository;
+    private final FriendrequestRepository friendrequestRepository;
 
-    public FriendService(PlayerRepository playerRepository) {
+    public FriendService(PlayerRepository playerRepository, FriendrequestRepository friendrequestRepository) {
         this.playerRepository = playerRepository;
+        this.friendrequestRepository = friendrequestRepository;
     }
 
     @Transactional
-    public void addFriend(Player player, Player req) {
-        Optional<Player> optionalPlayer = playerRepository.findByPlayer(player.getPlayer());
-        Optional<Player> optionalReq = playerRepository.findByPlayer(req.getPlayer());
+    public void acceptFriendRequest(String requester, String accepter) {
+        Optional<Friendrequest> request = friendrequestRepository.getFriendrequestByRequesterAndReceiver(requester, accepter);
+        Player requesterPlayer = playerRepository.findByPlayer(requester).get();
+        Player accepterPlayer = playerRepository.findByPlayer(accepter).get();
 
-        if (optionalPlayer.isEmpty() || optionalReq.isEmpty()) {
-            throw new RuntimeException("One or both players not found");
-        }
+        requesterPlayer.getFriends().add(accepterPlayer);
+        accepterPlayer.getFriends().add(requesterPlayer);
 
-        Player managedPlayer = optionalPlayer.get();
-        Player managedReq = optionalReq.get();
+        playerRepository.save(requesterPlayer);
+        playerRepository.save(accepterPlayer);
 
-        managedPlayer.getFriends().add(managedReq);
-        managedReq.getFriends().add(managedPlayer);
-
-        playerRepository.save(managedPlayer);
-        playerRepository.save(managedReq);
+        friendrequestRepository.delete(request.get());
     }
 
     @Transactional

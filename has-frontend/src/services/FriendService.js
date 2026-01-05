@@ -48,4 +48,55 @@ export default {
       accepter: username,
     })
   },
+
+  refuseFriendRequest(requester) {
+    const authStore = userAuthStore()
+    const user = authStore.currentUser
+
+    const username = user.username ?? user.player ?? null
+
+    if (!username) {
+      return Promise.reject(new Error('Could not determine current username'))
+    }
+
+    return axios.post('/api/friend/refuseRequest', {
+      requester: requester,
+      refuser: username,
+    })
+  },
+
+  getAllFriends() {
+    const authStore = userAuthStore()
+    const user = authStore.currentUser
+
+    const username = user.username ?? user.player ?? null
+
+    if (!username) {
+      return Promise.reject(new Error('Could not determine current username'))
+    }
+
+    return axios.get('/api/friend/friends', {
+      params: {
+        username: username,
+      },
+    })
+  },
+
+  deleteFriend(friend) {
+    const authStore = userAuthStore()
+    const user = authStore.currentUser
+
+    const username = user.username ?? user.player ?? null
+
+    if (!username) {
+      return Promise.reject(new Error('Could not determine current username'))
+    }
+
+    return axios.delete('/api/friend', {
+      params: {
+        username: username,
+        friend: friend,
+      },
+    })
+  },
 }

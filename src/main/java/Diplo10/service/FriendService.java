@@ -37,6 +37,14 @@ public class FriendService {
         friendrequestRepository.delete(request.get());
     }
 
+
+    @Transactional
+    public void refuseFriendRequest(String requester, String refuser) {
+        Optional<Friendrequest> request = friendrequestRepository.getFriendrequestByRequesterAndReceiver(requester, refuser);
+
+        friendrequestRepository.delete(request.get());
+    }
+
     @Transactional
     public Set<Player> getFriends(String name) {
         return playerRepository.findByPlayer(name)
@@ -44,6 +52,19 @@ public class FriendService {
                 .orElseGet(HashSet::new);
     }
 
+
+
+    @Transactional
+    public void deleteFriend(String player, String friend) {
+        Player playerEntity = playerRepository.findByPlayer(player).get();
+        Player friendEntity = playerRepository.findByPlayer(friend).get();
+
+        playerEntity.getFriends().remove(friendEntity);
+        friendEntity.getFriends().remove(playerEntity);
+
+        playerRepository.save(playerEntity);
+        playerRepository.save(friendEntity);
+    }
 
 
 }

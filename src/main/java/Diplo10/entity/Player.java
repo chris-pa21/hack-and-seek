@@ -1,5 +1,6 @@
 package Diplo10.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,6 +15,7 @@ import java.util.Set;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Player {
     @Id
+    @EqualsAndHashCode.Include
     private String player;
 
     private String password;
@@ -31,6 +33,7 @@ public class Player {
             inverseJoinColumns = @JoinColumn(name = "friend_username")
     )
     @ToString.Exclude
+    @JsonIgnore
     private Set<Player> friends = new HashSet<>();
 
     public Player(String name, String password, String email) {

@@ -58,4 +58,27 @@ public class FriendController {
         friendService.acceptFriendRequest(request.requester, request.accepter);
         return ResponseEntity.ok().build();
     }
+
+
+    public record RefuseFriendRequestRequest(String requester, String refuser) {}
+
+    @PostMapping("/refuseRequest")
+    public ResponseEntity<Void> refuseFriendRequest(@RequestBody RefuseFriendRequestRequest request) {
+        friendService.refuseFriendRequest(request.requester, request.refuser);
+        return ResponseEntity.ok().build();
+    }
+
+
+    @GetMapping("/friends")
+    public ResponseEntity<List<Player>> getFriends(@RequestParam String username) {
+        List<Player> friends = new ArrayList<>(friendService.getFriends(username));
+        return ResponseEntity.ok(friends);
+    }
+
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteFriendRequest(@RequestParam String username, @RequestParam String friend){
+        friendService.deleteFriend(username, friend);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -65,7 +65,7 @@ const sendFriendRequest = async () => {
 </script>
 <template>
   <div
-    class="bg-[#1F2937] px-3 pt-3 pb-6 flex flex-col gap-y-4 justify-center items-center w-full min-w-[300px] max-w-[450px] max-h-[400px] rounded-xl text-2xl"
+    class="bg-[#1F2937] px-3 pt-3 pb-6 flex flex-col gap-y-4 justify-center items-center w-full min-w-[300px] max-w-[600px] max-h-[250px] rounded-xl text-2xl"
   >
     <h2 class="font-semibold">Add Friends</h2>
     <input

@@ -1,6 +1,6 @@
 <script setup>
 import FriendService from '@/services/FriendService'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const friendRequests = ref([])
 const loadingRefresh = ref(null)
@@ -37,10 +37,14 @@ const refuseFriendRequest = async (requester) => {
     reloadRequests()
   }
 }
+
+onMounted(() => {
+  reloadRequests()
+})
 </script>
 <template>
   <div
-    class="bg-[#1F2937] px-3 pt-2 pb-5 flex flex-col gap-y-4 items-center w-full min-w-[300px] max-w-[450px] max-h-[400px] rounded-xl text-2xl"
+    class="bg-[#1F2937] px-3 pt-2 pb-5 flex flex-col gap-y-4 items-center w-full min-w-[300px] max-w-[600px] max-h-[400px] rounded-xl text-2xl"
   >
     <div class="relative flex items-center justify-center w-full">
       <h2 class="font-semibold">Incoming Requests</h2>

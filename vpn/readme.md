@@ -16,6 +16,10 @@ Versuchen.
 
 Ich habe es jetzt geschafft 2 unterschiedliche Debian Systeme aufzusetzen.
 
+Das Problem ist, dass es zu meinem jetzigen Kenntnissen nicht moeglich war,
+dass ich diese Debian Systeme mit WireGuard konfiguriere. Ich haette nicht
+gedacht, dass die Konfiguration unvergleichbar kompliziert verlaeuft.
+
 ## Refrences
 
 - [tutorial](https://linuxiac.com/how-to-set-up-wireguard-vpn-with-docker/)

@@ -3,7 +3,7 @@
 
 services:
   wireguard-server:
-    container_name: "wireguard-server"
+    container_name: wireguard-server
     image: lscr.io/linuxserver/wireguard:latest
     cap_add:
       - NET_ADMIN
@@ -14,38 +14,44 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Europe/Vienna
-      - SERVERURL=127.0.0.1
+      - SERVERURL=wireguard-server
       - SERVERPORT=51820
       - PEERS=2
       - PEERDNS=8.8.8.8
       - INTERNAL_SUBNET=10.8.19.0/24
     volumes:
-      - ./config:/config
+      - ./config/server:/config
     ports:
       - "51820:51820/udp"
 
   wg-client-1:
-    container_name: "wg-client-1"
-    image: debian:latest
-    command: ["sleep", "infinity"]
-    tty: true
+    container_name: wg-client-1
+    image: linuxserver/wireguard
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Vienna
     cap_add:
       - NET_ADMIN
-      - SYS_MODULE
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
     volumes:
-      - ./config/peer1/peer1.conf:/etc/wireguard/wg0.conf:ro
+      - ./config/client1:/config
+    depends_on:
+      - wireguard-server
 
   wg-client-2:
-    container_name: "wg-client-2"
-    image: debian:latest
-    command: ["sleep", "infinity"]
-    tty: true
+    container_name: wg-client-2
+    image: linuxserver/wireguard
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Vienna
     cap_add:
       - NET_ADMIN
-      - SYS_MODULE
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
     volumes:
-      - ./config/peer1/peer1.conf:/etc/wireguard/wg0.conf:ro
+      - ./config/client2:/config
+    depends_on:
+      - wireguard-server

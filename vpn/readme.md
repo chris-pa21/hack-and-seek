@@ -20,6 +20,11 @@ Das Problem ist, dass es zu meinem jetzigen Kenntnissen nicht moeglich war,
 dass ich diese Debian Systeme mit WireGuard konfiguriere. Ich haette nicht
 gedacht, dass die Konfiguration unvergleichbar kompliziert verlaeuft.
 
+Ich habe es nach weiterer Recherche doch hinbekommen und es ist nun moeglich
+zwei unterschiedliche WireGuard peers miteinander kommunizieren zu lassen ueber
+den WireGuard container. Naechster schritt ist die implementation ueber Spring
+Boot.
+
 ## Refrences
 
 - [tutorial](https://linuxiac.com/how-to-set-up-wireguard-vpn-with-docker/)

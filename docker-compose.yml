@@ -1,0 +1,11 @@
+networks:
+  frontend:
+    # frontend here using Dockerfile in has-frontend/
+  backend:
+    # backend here using Dockerfile in has-backend/
+  has_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.8.19.0/24

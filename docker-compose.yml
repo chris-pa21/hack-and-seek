@@ -1,11 +1,25 @@
 networks:
   frontend:
-    # frontend here using Dockerfile in has-frontend/
+    build:
+      context: ./has-frontend
+    ports:
+      - "80:${FRONTEND_PORT}"
+    networks:
+      network:
+        ipv4_address: 172.16.3.5
+
   backend:
-    # backend here using Dockerfile in has-backend/
-  has_network:
-    driver: bridge
+    build:
+      context: ./has-backend
+    ports:
+      - "8080:${BACKEND_PORT}"
+    networks:
+      network:
+        ipv4_address: 172.16.3.10
+
+network:
+  driver: bridge
     ipam:
       driver: default
       config:
-        - subnet: 10.8.19.0/24
+        - subnet: 172.16.3.0/24

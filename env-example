@@ -1,9 +1,8 @@
 # replace the [...] with appropriate values
+
 PASSWORD=[PASSWORD]
 
-################################################################################
-## default values, but feel free to change                                    ##
-################################################################################
+# default values, but feel free to change
 
 # ports
 FRONTEND_PORT=80

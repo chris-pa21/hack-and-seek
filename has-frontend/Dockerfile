@@ -1,10 +1,10 @@
 # build stage
 FROM node:20-alpine AS build
 WORKDIR /frontend
-COPY package.json yarn.lock ./
-RUN yarn install
+COPY package*.json ./
+RUN npm ci
 COPY . .
-RUN yarn build
+RUN npm run build
 
 # run stage
 FROM nginx:stable-alpine

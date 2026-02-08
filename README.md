@@ -1,27 +1,46 @@
-# Hack and SEEK
+# 👾 Hack and Seek
 
-**authors**
-- Christian Parushev
-- Andreas Maurer
-- Felix Bayerl
-- Andrä Florian
+Hack and Seek ist eine Attack-Defense-CTF-Plattform für Einzelspieler oder
+Teams, bei der es darum geht, gegnerische Schwachstellen zu finden und Flags zu
+erbeuten. Gleichzeitig muss der eigene Container abgesichert werden – Patchen
+ist erwünscht, doch das bloße Schließen der Ports führt zu Punktabzug. Dank
+strikter Netzwerkisolierung bleibt das Spielfeld sicher: Die Kommunikation ist
+auf die aktuelle Runde begrenzt, sodass IP-Kenntnisse aus anderen Sessions
+wertlos sind.
 
-## Windows
+## 👥 Mitglieder
+
+| Name               | Aufgabe                  |
+| ------------------ | ------------------------ |
+| Christian Parushev | Vue Frontend             |
+| Andreas Maurer     | VPN (WireGuard)          |
+| Felix Bayerl       | Datenbank                |
+| Andrä Florian      | Container Orchestrierung |
+| Yunus Eren         | Spring Backend           |
+
+## 💻 Technologien
+
+- Docker
+- Java 21
+- Vue.js latest
+
+## 🛠️ Anwendung
+
+Kopiere das `env-example` zu einem `.env` und ersätze **alle** mit eckigen
+Klammern markierten Platzhalter, wie `[PASSWORD]` mit sinnvollen Werten.
+
+⚠️ Das Passwort darf nicht zu einfach sein (z.B.: 1234), da sonst, je nach
+Datenbank und Version, der Container nicht starten könnte. Gehe auch sicher,
+dass die gewählten Ports nicht bereits besetzt sind.
+
+**Windows**
 
 ```powershell
-C:\> cd has-frontend/
-C:\> npm run dev
-C:\> cd ../has-backend/
-C:\> .\gradlew.bat bootRun
-
+C:\> docker compose -p has up -d
 ```
 
-## Linux
+**Linux**
 
 ```bash
-$ cd has-frontend/
-$ npm run dev
-$ cd ../has-backend/
-$ ./gradlew.bat bootRun
-
+$ docker compose -p has up -d
 ```

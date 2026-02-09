@@ -54,6 +54,22 @@ services:
     volumes:
       - ./config/server:/config
 
+  # wg-client:
+  #  container_name: wg-client-1
+  #  image: linuxserver/wireguard
+  #  environment:
+  #    - PUID=1000
+  #    - PGID=1000
+  #    - TZ=Europe/Vienna
+  #  cap_add:
+  #    - NET_ADMIN
+  #  sysctls:
+  #    - net.ipv4.conf.all.src_valid_mark=1
+  #  volumes:
+  #    - ./config/client1:/config
+  #  depends_on:
+  #    - wireguard-server
+
 
 # for now there is no need for a network we just use the default
 #networks:

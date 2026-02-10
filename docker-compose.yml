@@ -1,0 +1,77 @@
+services:
+  frontend:
+    build:
+      context: ./has-frontend
+    ports:
+      - "${FRONTEND_PORT}:80"
+
+  backend:
+    build:
+      context: ./has-backend
+    ports:
+      - "${BACKEND_PORT}:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/has
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=${PASSWORD}
+
+  database:
+    image: postgres:15-alpine
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${PASSWORD}
+      - POSTGRES_DB=has
+
+  adminer:
+    image: adminer:latest
+    ports:
+      - "${ADMINER_PORT}:8080"
+    depends_on:
+      - database
+
+  wireguard-server:
+    image: lscr.io/linuxserver/wireguard:latest
+    ports:
+      - "${WIREGUARD_PORT}:51820/udp"
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      # - net.ipv4.ip_forward=1
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Vienna
+      - SERVERURL=wireguard-server
+      - SERVERPORT=51820
+      - PEERS=2
+      - PEERDNS=8.8.8.8
+      - INTERNAL_SUBNET=10.8.19.0/24
+      # - ALLOWEDIPS=10.8.19.0/24 
+    volumes:
+      - ./config/server:/config
+
+  # wg-client:
+  #  container_name: wg-client-1
+  #  image: linuxserver/wireguard
+  #  environment:
+  #    - PUID=1000
+  #    - PGID=1000
+  #    - TZ=Europe/Vienna
+  #  cap_add:
+  #    - NET_ADMIN
+  #  sysctls:
+  #    - net.ipv4.conf.all.src_valid_mark=1
+  #  volumes:
+  #    - ./config/client1:/config
+  #  depends_on:
+  #    - wireguard-server
+
+
+# for now there is no need for a network we just use the default
+#networks:
+#  network:
+#    driver: bridge

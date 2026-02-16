@@ -26,4 +26,6 @@ public class NetworkService {
                 .withInternal(false) // Erlaubt Internet für Updates, falls nötig
                 .exec().getId();
     }
+
+    // TODO write another function deleteIsolatedNetwork
 }

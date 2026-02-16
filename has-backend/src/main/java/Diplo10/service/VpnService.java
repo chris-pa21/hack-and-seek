@@ -26,7 +26,19 @@ public class VpnService {
         }
     }
 
-    
+    public void excludeNetwork(String networkId) {
+        final String containerId = "has-wireguard-server";
+        try {
+            docker.disconnectFromNetworkCmd()
+                .withContainerId(containerId)
+                .withNetworkId(networkId)
+                .exec();
+
+            System.out.println("Successfully detached WireGuard from network: " + networkId);
+        } catch (Exception e) {
+            System.err.println("Error disconnecting from network: " + e.getMessage());
+        }
+    }
 
     public void connect() {
 

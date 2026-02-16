@@ -40,4 +40,8 @@ public class Game {
     public void addTeam(Team team){
         team_list.add(team);
     }
+
+    public Team findTeam(int teamId){
+
+    }
 }

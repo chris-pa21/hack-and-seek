@@ -1,6 +1,7 @@
 package Diplo10.controller;
 
 import Diplo10.entity.Game;
+import Diplo10.entity.Player;
 import Diplo10.entity.Team;
 import Diplo10.repository.GameRepository;
 import Diplo10.service.GameService;
@@ -26,6 +27,13 @@ public class GameController {
         this.gameService.addTeam(team, id);
         return ResponseEntity.ok().build();
     }
+    @PostMapping("/{gameId}/{teamId}/addUser")
+    public ResponseEntity<Void> addPlayer(@PathVariable int gameId, @PathVariable String teamId, @RequestBody Player player){
+        this.gameService.addPlayer(gameId, teamId, player);
+        return ResponseEntity.ok().build();
+    }
+
+
 
 
 

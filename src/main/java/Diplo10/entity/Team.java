@@ -32,4 +32,8 @@ public class Team {
         this.team_members = new ArrayList<>();
     }
 
+    public void addPlayer(Player player){
+        this.team_members.add(player);
+    }
+
 }

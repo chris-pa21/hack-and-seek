@@ -24,4 +24,16 @@ public class GameService {
         team.addPlayer(player);
     }
 
+    public void deleteTeam(String teamId, int gameId){
+        Team team = this.teamRepository.findByName(teamId).get();
+        Game game = this.gameRepository.findById(gameId).get();
+
+        game.deleteTeam(team);
+    }
+
+    public void deletePlayer(String teamId, int gameId, Player player){
+        Team team = this.teamRepository.findByGame_idAndName(teamId, gameId).get();
+        team.deletePlayer(player);
+    }
+
 }

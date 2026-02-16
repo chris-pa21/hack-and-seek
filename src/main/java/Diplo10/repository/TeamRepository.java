@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface TeamRepository extends JpaRepository<Team, Integer> {
+public interface TeamRepository extends JpaRepository<Team, String> {
     Optional<Team> findByName(String teamName);
     List<Team> findByGame_id(int gameId);
     Optional<Team> findByGame_idAndName(String teamName, int gameId);

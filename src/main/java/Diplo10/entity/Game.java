@@ -41,7 +41,7 @@ public class Game {
         team_list.add(team);
     }
 
-    public Team findTeam(int teamId){
-
+    public void deleteTeam(Team team){
+        this.team_list.remove(team);
     }
 }

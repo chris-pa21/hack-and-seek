@@ -1,0 +1,13 @@
+rules:
+  - id: hardcoded-sensitive-data
+    languages: [javascript, python, yaml]
+    severity: WARNING
+    message: "Qualität: Ein potenzielles Secret oder eine Flagge wurde im Code gefunden. Nutze Umgebungsvariablen."
+    # Die RegEx muss in einfache Anführungszeichen, damit YAML nicht verwirrt ist
+    pattern-regex: '(?i)(password|secret|api_key|flag_)\s*[:=]\s*[''"].+[''"]'
+
+  - id: find-unsafe-eval
+    languages: [javascript, python]
+    severity: ERROR
+    message: "Sicherheitsrisiko: eval() kann zur Ausführung von bösartigem Code führen!"
+    pattern: eval(...)

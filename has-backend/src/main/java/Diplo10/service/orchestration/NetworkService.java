@@ -23,8 +23,11 @@ public class NetworkService {
 
         // Prüfen, ob Netzwerk bereits existiert (Reproduzierbarkeit)
         List<Network> networks = dockerClient.listNetworksCmd().withNameFilter(networkName).exec();
-        if (!networks.isEmpty()) return networks.get(0).getId();
-
+        if (!networks.isEmpty()) {
+            String existingId = networks.get(0).getId();
+            vpn.includeNetwork(networkName);
+            return existingId;
+        }
         return dockerClient.createNetworkCmd()
                 .withName(networkName)
                 .withCheckDuplicate(true)
@@ -32,11 +35,19 @@ public class NetworkService {
                 .exec().getId();
     }
 
-    // TODO write another function deleteIsolatedNetwork
-    public String deleteIsolatedNetwork(String teamName) {
+    public void deleteIsolatedNetwork(String teamName) {
         String networkName = "net_" + teamName;
+
         vpn.excludeNetwork(networkName);
 
-        return null;
+        List<Network> networks = dockerClient.listNetworksCmd().withNameFilter(networkName).exec();
+
+        for(Network net : networks) {
+            try {
+                dockerClient.removeNetworkCmd(net.getId()).exec();
+            } catch (Exception e) {
+                System.err.println("Fehler beim Löschen des Netzwerks " + networkName + ": " + e.getMessage());
+            }
+        }
     }
 }

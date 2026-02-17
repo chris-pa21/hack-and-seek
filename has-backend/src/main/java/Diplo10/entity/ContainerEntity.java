@@ -16,16 +16,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class ContainerEntity {
-
     @Id
     private String containerId; // Die ID von Docker
     private String teamName;
     private String networkId;
     private String image;
     private LocalDateTime createdAt;
-
-
-
-
-
 }

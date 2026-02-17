@@ -1,6 +1,6 @@
 package Diplo10.service.orchestration;
 
-import Diplo10.service.VpnService;
+import Diplo10.service.vpn.VpnService;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Network;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,7 +1,6 @@
-package Diplo10.service;
+package Diplo10.service.vpn;
 
 import com.github.dockerjava.api.DockerClient;
-import org.springframework.beans.factory.annotation.*;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -40,7 +39,11 @@ public class VpnService {
         }
     }
 
-    public void connect() {
+    public void addPeer() {
+
+    }
+
+    public void removePeer() {
 
     }
 }

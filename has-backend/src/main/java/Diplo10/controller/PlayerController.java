@@ -31,5 +31,12 @@ public class PlayerController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+
+    @GetMapping("/points")
+    public ResponseEntity<Integer> getPoints(@RequestParam String username) {
+        Player player = playerService.findByPlayer(username);
+        return new ResponseEntity<>(player.getPoints(), HttpStatus.OK);
+    }
+
 }
 

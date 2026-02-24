@@ -32,9 +32,11 @@ services:
       - database
 
   wireguard-server:
-    image: lscr.io/linuxserver/wireguard:latest
+    build:
+      context: ./has-vpn
     ports:
       - "${WIREGUARD_PORT}:51820/udp"
+      - "9999:9999"
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
@@ -53,25 +55,7 @@ services:
       # - ALLOWEDIPS=10.8.19.0/24 
     volumes:
       - ./config/server:/config
-
-  # wg-client:
-  #  container_name: wg-client-1
-  #  image: linuxserver/wireguard
-  #  environment:
-  #    - PUID=1000
-  #    - PGID=1000
-  #    - TZ=Europe/Vienna
-  #  cap_add:
-  #    - NET_ADMIN
-  #  sysctls:
-  #    - net.ipv4.conf.all.src_valid_mark=1
-  #  volumes:
-  #    - ./config/client1:/config
-  #  depends_on:
-  #    - wireguard-server
-
-
-# for now there is no need for a network we just use the default
-#networks:
-#  network:
-#    driver: bridge
+  # for now there is no need for a network we just use the default
+  #networks:
+  #  network:
+  #    driver: bridge

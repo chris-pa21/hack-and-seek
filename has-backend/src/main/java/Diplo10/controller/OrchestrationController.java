@@ -1,5 +1,6 @@
 package Diplo10.controller;
 
+import Diplo10.entity.ContainerEntity;
 import Diplo10.service.orchestration.OrchestrationService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +16,9 @@ public class OrchestrationController {
     }
 
     @PostMapping("/deploy")
-    public ResponseEntity<String> deployChallenge(@RequestParam String teamName, @RequestParam String image) {
+    public ResponseEntity<?> deployChallenge(@RequestParam String teamName, @RequestParam String image) {
         try {
-            orchestrationService.setupGameForTeam(teamName, image);
+            ContainerEntity entity = orchestrationService.setupGameForTeam(teamName, image);
             return ResponseEntity.ok("Deployment für Team " + teamName + " erfolgreich gestartet.");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Fehler beim Deployment: " + e.getMessage());

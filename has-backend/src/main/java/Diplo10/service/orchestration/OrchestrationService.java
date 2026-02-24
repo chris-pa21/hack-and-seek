@@ -25,12 +25,15 @@ public class OrchestrationService {
     }
 
     @Transactional
-    public void setupGameForTeam(String teamName, String challengeImage) {
+    public ContainerEntity setupGameForTeam(String teamName, String challengeImage) {
         // 1. Isoliertes Netzwerk erstellen
         String netId = networkService.createIsolatedNetwork(teamName);
+        String result = containerService.spawnChallengeContainer(challengeImage, teamName, netId);
+        String[] parts = result.split(":");
+        String containerId = parts[0];
+        Integer port = Integer.parseInt(parts[1]);
 
         // 2. Container im Netzwerk starten
-        String containerId = containerService.spawnChallengeContainer(challengeImage, teamName, netId);
 
         // 3. Im Repository speichern für Reproduzierbarkeit/Monitoring
         ContainerEntity entity = ContainerEntity.builder()
@@ -39,7 +42,8 @@ public class OrchestrationService {
                 .networkId(netId)
                 .image(challengeImage) // Wichtig: Das Image mit speichern!
                 .build();
-        repository.save(entity);
+
+        return repository.save(entity);
     }
     @Transactional
     public void terminateGame(String teamName) {

@@ -36,7 +36,7 @@ services:
       context: ./has-vpn
     ports:
       - "${WIREGUARD_PORT}:51820/udp"
-      - "9999:9999"
+      - "${VPN_MANAGER_PORT}:9999"
     cap_add:
       - NET_ADMIN
       - SYS_MODULE

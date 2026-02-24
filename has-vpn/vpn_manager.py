@@ -8,7 +8,6 @@ app = Flask(__name__)
 def run_cmd(args):
     """Runs a command safely using a list of arguments."""
     try:
-        # We don't use shell=True to prevent command injection
         result = subprocess.run(args, capture_output=True, text=True)
         if result.returncode != 0:
             print(f"Command Failed: {' '.join(args)}\nError: {result.stderr}", file=sys.stderr)
@@ -23,7 +22,6 @@ def init_firewall():
     print("Initializing: Setting up isolated forward policy...")
     run_cmd(["iptables", "-F", "FORWARD"])
     run_cmd(["iptables", "-P", "FORWARD", "DROP"])
-    # Allow established/related so existing connections don't hang
     run_cmd(["iptables", "-A", "FORWARD", "-m", "conntrack", "--ctstate", "ESTABLISHED,RELATED", "-j", "ACCEPT"])
 
 def validate_subnet(subnet):
@@ -42,12 +40,8 @@ def health():
 def add_game_network():
     data = request.get_json()
     subnet = data.get('subnet')
-
     if not subnet or not validate_subnet(subnet):
         return jsonify({"error": "Invalid or missing subnet"}), 400
-
-    # Rule: Allow intra-subnet traffic
-    # This allows users in the same subnet to talk to each other
     if run_cmd(["iptables", "-A", "FORWARD", "-s", subnet, "-d", subnet, "-j", "ACCEPT"]):
         return jsonify({"status": "active", "subnet": subnet}), 200
     
@@ -57,10 +51,8 @@ def add_game_network():
 def delete_game_network():
     data = request.get_json()
     subnet = data.get('subnet')
-
     if not subnet or not validate_subnet(subnet):
         return jsonify({"error": "Invalid or missing subnet"}), 400
-
     if run_cmd(["iptables", "-D", "FORWARD", "-s", subnet, "-d", subnet, "-j", "ACCEPT"]):
         return jsonify({
             "status": "deleted", 
@@ -68,6 +60,15 @@ def delete_game_network():
         }), 200
     
     return jsonify({"error": "Rule not found or could not be deleted"}), 404
+
+@app.route('/api/game', methods=['GET'])
+def get_game_networks():
+    """Returns a list of current FORWARD rules to verify what is active."""
+    try:
+        result = subprocess.run(["iptables", "-L", "FORWARD", "-n"], capture_output=True, text=True)
+        return jsonify({"rules": result.stdout.splitlines()}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     init_firewall()

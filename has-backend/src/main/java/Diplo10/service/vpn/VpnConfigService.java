@@ -16,7 +16,7 @@ public class VpnConfigService {
     @Autowired
     private PlayerRepository repository;
 
-    public VpnConfigService(Path config) {
+    /*public VpnConfigService(Path config) {
         config = Path.of("wg0.conf");
     }
 
@@ -26,5 +26,5 @@ public class VpnConfigService {
 
     public compile() {
 
-    }
+    }*/
 }

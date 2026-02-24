@@ -48,7 +48,7 @@ services:
       - PGID=1000
       - TZ=Europe/Vienna
       - SERVERURL=wireguard-server
-      - SERVERPORT=51820
+      - SERVERPORT=${WIREGUARD_PORT}
       - PEERS=2
       - PEERDNS=8.8.8.8
       - INTERNAL_SUBNET=10.8.19.0/24

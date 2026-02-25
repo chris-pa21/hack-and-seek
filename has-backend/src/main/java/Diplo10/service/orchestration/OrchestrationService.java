@@ -40,31 +40,29 @@ public class OrchestrationService {
                 .containerId(containerId)
                 .teamName(teamName)
                 .networkId(netId)
-                .image(challengeImage) // Wichtig: Das Image mit speichern!
+                .image(challengeImage)
+                .publicPort(port)
                 .build();
 
         return repository.save(entity);
     }
     @Transactional
     public void terminateGame(String teamName) {
-        // 1. Alle Container des Teams aus PostgreSQL suchen
         List<ContainerEntity> containers = repository.findByTeamName(teamName);
 
         for (ContainerEntity entity : containers) {
             try {
-                // 2. Docker Container stoppen und entfernen
                 dockerclient.removeContainerCmd(entity.getContainerId())
                         .withForce(true)
                         .exec();
 
-                // 3. Aus Datenbank löschen (Reproduzierbarkeit: Weg ist weg)
                 repository.delete(entity);
 
-                // 4. Netzwerk entfernen
                 dockerclient.removeNetworkCmd(entity.getNetworkId()).exec();
             } catch (Exception e) {
-                // Log Fehler, falls Container bereits manuell gelöscht wurde
+                System.err.println("Fehler beim Entfernen von Container " + entity.getContainerId() + ": " + e.getMessage());
             }
         }
+        networkService.deleteIsolatedNetwork(teamName);
     }
 }

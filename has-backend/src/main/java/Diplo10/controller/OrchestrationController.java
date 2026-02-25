@@ -24,4 +24,9 @@ public class OrchestrationController {
             return ResponseEntity.internalServerError().body("Fehler beim Deployment: " + e.getMessage());
         }
     }
+    @DeleteMapping("stop/{teamName}")
+    public ResponseEntity<String> stopGame(@PathVariable String teamName) {
+        orchestrationService.terminateGame(teamName);
+        return ResponseEntity.ok("Spiel für Team " + teamName + " wurde beendet und alle Ressourcen (Container & Netzwerk) wurden gelöscht.");
+    }
 }

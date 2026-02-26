@@ -25,7 +25,7 @@ public class OrchestrationService {
     }
 
     @Transactional
-    public ContainerEntity setupGameForTeam(String teamName, String challengeImage) {
+    public ContainerEntity setupGameForTeam(String teamName, String challengeImage, String teamPlayers) {
         // 1. Isoliertes Netzwerk erstellen
         String netId = networkService.createIsolatedNetwork(teamName);
         String result = containerService.spawnChallengeContainer(challengeImage, teamName, netId);
@@ -41,6 +41,7 @@ public class OrchestrationService {
                 .teamName(teamName)
                 .networkId(netId)
                 .image(challengeImage)
+                .teamPlayers(teamPlayers)
                 .publicPort(port)
                 .build();
 

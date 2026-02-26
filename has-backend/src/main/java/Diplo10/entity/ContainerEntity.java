@@ -19,6 +19,7 @@ public class ContainerEntity {
     @Id
     private String containerId; // Die ID von Docker
     private String teamName;
+    private String teamPlayers; // Optional: Namen der Spieler im Team, als String oder JSON
     private String networkId;
     private String image;
     private LocalDateTime createdAt;

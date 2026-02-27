@@ -2,6 +2,7 @@
 import AddFriends from '@/components/AddFriends.vue'
 import FriendRequests from '@/components/FriendRequests.vue'
 import Friends from '@/components/Friends.vue'
+import Game from '@/components/Game.vue'
 import Scoreboard from '@/components/Scoreboard.vue'
 import UserNavbar from '@/components/UserNavbar.vue'
 </script>
@@ -13,8 +14,9 @@ import UserNavbar from '@/components/UserNavbar.vue'
     <div class="flex flex-col gap-6 items-center w-full lg:w-[600px]">
       <Scoreboard />
     </div>
-    <!-- Right column: Friend cards -->
+    <!-- Right column: Game + Friend cards -->
     <div class="flex flex-col gap-6 items-center w-full lg:w-[600px]">
+      <Game />
       <AddFriends />
       <FriendRequests />
       <Friends />

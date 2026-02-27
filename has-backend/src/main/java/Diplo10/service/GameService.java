@@ -20,7 +20,7 @@ public class GameService {
     }
     public void addPlayer(int gameId, String teamId, Player player){
         Game game = gameRepository.findById(gameId).get();
-        Team team = teamRepository.findByGame_idAndName(teamId, gameId).get();
+        Team team = teamRepository.findByGameIdAndName(gameId, teamId).get();
         team.addPlayer(player);
     }
 
@@ -32,7 +32,7 @@ public class GameService {
     }
 
     public void deletePlayer(String teamId, int gameId, Player player){
-        Team team = this.teamRepository.findByGame_idAndName(teamId, gameId).get();
+        Team team = this.teamRepository.findByGameIdAndName(gameId, teamId).get();
         team.deletePlayer(player);
     }
 

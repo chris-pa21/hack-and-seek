@@ -45,13 +45,13 @@ public class GameController {
 
     @GetMapping("/{gameId}/teams")
     public ResponseEntity<List> showTeams(@PathVariable int gameId){
-        List teams = this.teamRepository.findByGame_id(gameId);
+        List teams = this.teamRepository.findByGameId(gameId);
         return ResponseEntity.ok(teams);
     }
 
     @GetMapping("/{gameId}/teams/{teamId}")
     public ResponseEntity<Team> showTeams(@PathVariable int gameId, @PathVariable String teamId){
-        Team teams = this.teamRepository.findByGame_idAndName(teamId, gameId).get();
+        Team teams = this.teamRepository.findByGameIdAndName(gameId, teamId).get();
         return ResponseEntity.ok(teams);
     }
 

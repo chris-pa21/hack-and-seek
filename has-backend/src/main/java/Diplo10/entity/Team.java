@@ -21,14 +21,14 @@ public class Team {
     @Id
     private String name;
 
-    private int game_id;
+    private int gameId;
 
     @ManyToMany
     private List<Player> team_members;
 
     public Team(String name) {
         this.name = name;
-        this.game_id = game_id;
+        this.gameId = gameId;
         this.team_members = new ArrayList<>();
     }
 

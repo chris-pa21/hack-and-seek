@@ -33,6 +33,22 @@ Klammern markierten Platzhalter, wie `[PASSWORD]` mit sinnvollen Werten.
 Datenbank und Version, der Container nicht starten könnte. Gehe auch sicher,
 dass die gewählten Ports nicht bereits besetzt sind.
 
+### Lokale Entwicklung (ohne Docker)
+
+Um das Backend lokal zu starten, erstelle eine `.env`-Datei im
+`has-backend/`-Verzeichnis mit folgendem Inhalt:
+
+```
+PASSWORD=dein_datenbank_passwort
+```
+
+Dann starte die Datenbank via Docker und das Backend lokal:
+
+```bash
+$ docker compose up database -d
+$ cd has-backend && ./gradlew bootRun
+```
+
 **Windows**
 
 ```powershell

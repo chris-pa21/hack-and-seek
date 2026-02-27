@@ -64,13 +64,13 @@ public class GameController {
 
 
     //====================================Image??=======================================
-    @PatchMapping("/{gameId}/teams/{teamId}")
+    /*@PatchMapping("/{gameId}/teams/{teamId}")
     public ResponseEntity<Void> editTeamInGame(@PathVariable int gameId, @PathVariable String teamId, @RequestParam String name){
         Game game = this.gameRepository.findById(gameId).get();
 
         game.setName(name);
         return ResponseEntity.ok().build();
-    }
+    }*/
 
 
     @DeleteMapping("/{gameId}")
@@ -85,9 +85,9 @@ public class GameController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/{gameId}/teams/{teamId}")
+    /*@DeleteMapping("/{gameId}/teams/{teamId}")
     public ResponseEntity<Void> deletePlayerInTeam(@PathVariable int gameId, @PathVariable String teamId, @RequestParam Player player){
         this.gameService.deletePlayer(teamId, gameId, player);
         return ResponseEntity.ok().build();
-    }
+    }*/
 }

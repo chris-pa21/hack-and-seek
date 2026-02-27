@@ -24,7 +24,7 @@ onMounted(() => {
 
 <template>
   <div
-    class="bg-[#1F2937] px-6 pt-6 pb-6 flex flex-col gap-y-4 items-center w-full min-w-[300px] max-w-[600px] rounded-2xl"
+    class="bg-[#1F2937] px-6 pt-6 pb-6 flex flex-col gap-y-4 items-center w-full max-w-[400px] lg:max-w-[600px] rounded-2xl"
   >
     <div class="relative flex flex-col items-center justify-center w-full gap-y-2">
       <h2 class="font-bold text-4xl text-[#E0E6F0]">Ranking</h2>

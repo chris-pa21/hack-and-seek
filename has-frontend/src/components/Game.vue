@@ -1,7 +1,21 @@
 <script setup>
-const createGame = () => {
-  // TODO: implement game creation logic
-  console.log('Create Game clicked')
+import { ref } from 'vue'
+import CreateGameModal from '@/components/CreateGameModal.vue'
+
+const isModalOpen = ref(false)
+
+const openModal = () => {
+  isModalOpen.value = true
+}
+
+const closeModal = () => {
+  isModalOpen.value = false
+}
+
+const handleCreateGame = (gameData) => {
+  // TODO: implement actual game creation API call
+  console.log('Game Creation Data:', gameData)
+  closeModal()
 }
 </script>
 
@@ -14,11 +28,18 @@ const createGame = () => {
     </div>
 
     <button
-      @click="createGame"
+      @click="openModal"
       class="primary-button"
     >
       Create Game
     </button>
+
+    <!-- Create Game Modal -->
+    <CreateGameModal 
+      :show="isModalOpen" 
+      @close="closeModal" 
+      @create="handleCreateGame" 
+    />
   </div>
 </template>
 

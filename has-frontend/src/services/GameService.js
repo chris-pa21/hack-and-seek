@@ -13,4 +13,8 @@ export default {
     deleteGame(gameId) {
         return axios.delete(`/api/games/${gameId}`)
     },
+
+    getChallenges() {
+        return axios.get('/api/games/challenges')
+    },
 }

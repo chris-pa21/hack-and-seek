@@ -7,6 +7,8 @@ import Diplo10.repository.GameRepository;
 import Diplo10.repository.PlayerRepository;
 import Diplo10.repository.TeamRepository;
 import Diplo10.service.GameService;
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.model.Image;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -25,6 +27,25 @@ public class GameController {
     private final GameService gameService;
     private final TeamRepository teamRepository;
     private final PlayerRepository playerRepository;
+    private final DockerClient dockerClient;
+
+    @GetMapping("/challenges")
+    public ResponseEntity<List<String>> getChallenges() {
+        List<Image> images = dockerClient.listImagesCmd()
+                .withLabelFilter(java.util.Map.of("type", "challenge"))
+                .exec();
+
+        List<String> names = new ArrayList<>();
+        for (Image image : images) {
+            String[] tags = image.getRepoTags();
+            if (tags != null) {
+                for (String tag : tags) {
+                    names.add(tag);
+                }
+            }
+        }
+        return ResponseEntity.ok(names);
+    }
 
     /**
      * Full game creation: accepts a name + list of teams (each with players & challenge).

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import FriendService from '@/services/FriendService'
+import GameService from '@/services/GameService'
 
 const props = defineProps({
   show: Boolean
@@ -10,7 +11,7 @@ const emit = defineEmits(['close', 'create'])
 const gameName = ref('')
 const teams = ref([])
 const availableFriends = ref([])
-const challenges = ['Challenge 1', 'Challenge 2', 'Challenge 3']
+const challenges = ref([])
 
 const loadFriends = async () => {
   try {
@@ -21,17 +22,27 @@ const loadFriends = async () => {
   }
 }
 
+const loadChallenges = async () => {
+  try {
+    const response = await GameService.getChallenges()
+    challenges.value = response.data
+  } catch (error) {
+    console.error('Failed to load challenges:', error)
+  }
+}
+
 watch(() => props.show, (newVal) => {
   if (newVal) {
     loadFriends()
+    loadChallenges()
   }
 })
 
 const addTeam = () => {
   teams.value.push({
     name: '',
-    selectedChallenge: challenges[0],
-    players: [] // Array of usernames (player)
+    selectedChallenge: challenges.value[0] ?? '',
+    players: []
   })
 }
 

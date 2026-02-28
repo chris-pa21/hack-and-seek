@@ -50,7 +50,7 @@ async function logout() {
         <p class="text-[#018EF4]">{{ points }} pts</p>
       </div>
       <div class="hidden sm:flex items-center">
-        <button @click="logout" class="danger-button ml-4">
+        <button @click="logout" class="secondary-button ml-4">
           Logout
         </button>
       </div>
@@ -81,12 +81,12 @@ async function logout() {
         <p>
           {{ auth.currentUser?.username }} — <span class="text-[#018EF4]">{{ points }} pts</span>
         </p>
-        <p
+        <button
           @click="(logout(), toggleMenu())"
-          class="cursor-pointer hover:text-[#018EF4] transition-all duration-200"
+          class="secondary-button w-full"
         >
           Logout
-        </p>
+        </button>
       </div>
     </div>
   </nav>

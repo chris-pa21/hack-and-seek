@@ -23,6 +23,8 @@ public class Team {
 
     private int gameId;
 
+    private String challenge;
+
     @ManyToMany
     private List<Player> team_members;
 

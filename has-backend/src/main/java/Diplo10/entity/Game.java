@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -21,7 +22,8 @@ public class Game {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    private String Name;
+    private String name;
+
     @ManyToOne
     @JoinColumn(name = "created_by_player")
     private Player created_by;
@@ -37,11 +39,11 @@ public class Game {
     @ManyToMany
     private List<Team> team_list;
 
-    public void addTeam(Team team){
+    public void addTeam(Team team) {
         team_list.add(team);
     }
 
-    public void deleteTeam(Team team){
+    public void deleteTeam(Team team) {
         this.team_list.remove(team);
     }
 }

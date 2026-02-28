@@ -49,13 +49,25 @@ const removePlayerFromTeam = (teamIndex, playerUsername) => {
 }
 
 const handleCreate = () => {
-  if (!gameName.value || teams.value.length === 0) {
-    alert('Please provide a game name and at least one team.')
+  if (!gameName.value.trim()) {
+    alert('Please provide a game name.')
+    return
+  }
+  if (teams.value.length === 0) {
+    alert('Please add at least one team.')
+    return
+  }
+  if (teams.value.some(t => !t.name.trim())) {
+    alert('All teams must have a name.')
     return
   }
   emit('create', {
-    name: gameName.value,
-    teams: teams.value
+    name: gameName.value.trim(),
+    teams: teams.value.map(t => ({
+      name: t.name.trim(),
+      challenge: t.selectedChallenge,
+      players: t.players
+    }))
   })
   resetForm()
 }

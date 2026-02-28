@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import CreateGameModal from '@/components/CreateGameModal.vue'
 import GameService from '@/services/GameService'
 
+const router = useRouter()
 const isModalOpen = ref(false)
 const games = ref([])
 const isLoading = ref(false)
@@ -67,7 +69,8 @@ const handleCreateGame = async (gameData) => {
         v-else
         v-for="game in games"
         :key="game.id"
-        class="bg-[#0F172A] rounded-xl px-4 py-3 flex flex-col gap-y-1 border border-gray-700 hover:border-[#00C853] transition-colors"
+        @click="router.push('/game/' + game.id)"
+        class="bg-[#0F172A] rounded-xl px-4 py-3 flex flex-col gap-y-1 border border-gray-700 hover:border-[#00C853] transition-colors cursor-pointer"
       >
         <div class="flex justify-between items-center">
           <span class="font-bold text-[#E0E6F0] text-base truncate">{{ game.name }}</span>

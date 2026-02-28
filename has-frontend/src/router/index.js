@@ -1,4 +1,5 @@
 import DashboardView from '@/views/DashboardView.vue'
+import GameDetailView from '@/views/GameDetailView.vue'
 import HomeView from '@/views/HomeView.vue'
 import LoginView from '@/views/LoginView.vue'
 import RegisterView from '@/views/RegisterView.vue'
@@ -12,6 +13,7 @@ const router = createRouter({
     { path: '/login', component: LoginView },
     { path: '/register', component: RegisterView },
     { path: '/dashboard', component: DashboardView, meta: { requiresAuth: true } },
+    { path: '/game/:id', component: GameDetailView, meta: { requiresAuth: true } },
 
     {
       path: '/:pathMatch(.*)*',

@@ -63,7 +63,7 @@ onMounted(() => {
         <div class="flex items-center gap-x-2 ml-auto">
           <button
             @click="deleteFriend(friend.player)"
-            class="bg-[#DC0B00] hover:bg-[#a00900] disabled:bg-[#005724] disabled:cursor-not-allowed cursor-pointer text-[#E0E6F0] px-1.5 py-0.5 rounded-lg text-sm font-semibold"
+            class="danger-button"
           >
             &#10005;
           </button>

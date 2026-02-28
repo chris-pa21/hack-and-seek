@@ -72,13 +72,13 @@ onMounted(() => {
         <div class="flex items-center gap-x-2 ml-auto">
           <button
             @click="acceptFriendRequest(request.username)"
-            class="bg-[#00C853] disabled:bg-[#005724] disabled:cursor-not-allowed cursor-pointer text-[#E0E6F0] px-4 py-1 rounded-lg text-sm font-semibold"
+            class="primary-button"
           >
             &check;
           </button>
           <button
             @click="refuseFriendRequest(request.username)"
-            class="bg-[#DC0B00] disabled:bg-[#005724] disabled:cursor-not-allowed cursor-pointer text-[#E0E6F0] px-4 py-1 rounded-lg text-sm font-semibold"
+            class="danger-button"
           >
             &#10005;
           </button>

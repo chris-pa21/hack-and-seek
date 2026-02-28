@@ -91,7 +91,7 @@ const sendFriendRequest = async () => {
       <button
         @click="sendFriendRequest"
         :disabled="isSending || !sendRequestButton"
-        class="bg-[#00C853] disabled:bg-[#005724] disabled:cursor-not-allowed cursor-pointer text-[#E0E6F0] px-4 py-1 rounded-lg text-sm font-semibold"
+        class="primary-button"
       >
         {{ isSending ? 'Sending...' : !sendRequestButton ? '&check;' : 'add friend' }}
       </button>

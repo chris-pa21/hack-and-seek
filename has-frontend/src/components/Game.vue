@@ -15,7 +15,7 @@ const createGame = () => {
 
     <button
       @click="createGame"
-      class="bg-[#00C853] hover:bg-[#009a40] cursor-pointer text-[#E0E6F0] px-4 py-1 rounded-lg text-sm font-semibold transition-colors"
+      class="primary-button"
     >
       Create Game
     </button>

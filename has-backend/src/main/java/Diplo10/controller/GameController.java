@@ -9,6 +9,7 @@ import Diplo10.repository.TeamRepository;
 import Diplo10.service.GameService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -29,12 +30,17 @@ public class GameController {
      * Full game creation: accepts a name + list of teams (each with players & challenge).
      */
     @PostMapping("/create")
-    public ResponseEntity<Game> createGame(@RequestBody CreateGameRequest req) {
+    public ResponseEntity<Game> createGame(@RequestBody CreateGameRequest req, Authentication authentication) {
         // 1. Save the bare game first to get an ID
         Game game = new Game();
         game.setName(req.name());
         game.setCreated_at(new Date());
         game.setTeam_list(new ArrayList<>());
+
+        // Set the creator to the authenticated user
+        String username = authentication.getName();
+        playerRepository.findByPlayer(username).ifPresent(game::setCreated_by);
+
         game = gameRepository.save(game);
 
         // 2. Build and attach each team
@@ -46,8 +52,8 @@ public class GameController {
             team.setTeam_members(new ArrayList<>());
 
             // Resolve players by username
-            for (String username : teamReq.players()) {
-                playerRepository.findByPlayer(username).ifPresent(team::addPlayer);
+            for (String playerName : teamReq.players()) {
+                playerRepository.findByPlayer(playerName).ifPresent(team::addPlayer);
             }
 
             teamRepository.save(team);
@@ -72,8 +78,9 @@ public class GameController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Game>> showGames() {
-        List<Game> games = this.gameRepository.findAll();
+    public ResponseEntity<List<Game>> showGames(Authentication authentication) {
+        String username = authentication.getName();
+        List<Game> games = this.gameRepository.findGamesByPlayer(username);
         return ResponseEntity.ok(games);
     }
 

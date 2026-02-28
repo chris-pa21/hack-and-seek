@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import FriendService from '@/services/FriendService'
 
 const props = defineProps({
@@ -15,15 +15,16 @@ const challenges = ['Challenge 1', 'Challenge 2', 'Challenge 3']
 const loadFriends = async () => {
   try {
     const response = await FriendService.getAllFriends()
-    // Based on Friends.vue, each item is { player, points, ... }
     availableFriends.value = response.data
   } catch (error) {
     console.error('Failed to load friends:', error)
   }
 }
 
-onMounted(() => {
-  loadFriends()
+watch(() => props.show, (newVal) => {
+  if (newVal) {
+    loadFriends()
+  }
 })
 
 const addTeam = () => {

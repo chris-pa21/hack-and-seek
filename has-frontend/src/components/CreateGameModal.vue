@@ -1,7 +1,8 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import FriendService from '@/services/FriendService'
 import GameService from '@/services/GameService'
+import { userAuthStore } from '@/stores/auth'
 
 const props = defineProps({
   show: Boolean
@@ -10,15 +11,26 @@ const emit = defineEmits(['close', 'create'])
 
 const gameName = ref('')
 const teams = ref([])
-const availableFriends = ref([])
+const availablePlayers = ref([])
 const challenges = ref([])
 
-const loadFriends = async () => {
+const loadPlayers = async () => {
   try {
     const response = await FriendService.getAllFriends()
-    availableFriends.value = response.data
+    const friends = response.data
+
+    const authStore = userAuthStore()
+    const user = authStore.currentUser
+    const username = user?.username ?? user?.player ?? null
+
+    // Add the creator if not already in the friends list
+    if (username && !friends.some(f => f.player === username)) {
+      friends.unshift({ player: username, points: null })
+    }
+
+    availablePlayers.value = friends
   } catch (error) {
-    console.error('Failed to load friends:', error)
+    console.error('Failed to load players:', error)
   }
 }
 
@@ -33,7 +45,7 @@ const loadChallenges = async () => {
 
 watch(() => props.show, (newVal) => {
   if (newVal) {
-    loadFriends()
+    loadPlayers()
     loadChallenges()
   }
 })
@@ -93,9 +105,14 @@ const close = () => {
   emit('close')
 }
 
-// Helper to filter friends NOT in the current team
-const getAvailableForTeam = (teamPlayers) => {
-    return availableFriends.value.filter(f => !teamPlayers.includes(f.player))
+// Collect all players already assigned to any team
+const allAssignedPlayers = computed(() => {
+  return teams.value.flatMap(t => t.players)
+})
+
+// Filter to players not assigned to any team
+const getAvailableForTeam = () => {
+  return availablePlayers.value.filter(p => !allAssignedPlayers.value.includes(p.player))
 }
 
 </script>
@@ -183,9 +200,9 @@ const getAvailableForTeam = (teamPlayers) => {
                     @change="(e) => { addPlayerToTeam(tIdx, e.target.value); e.target.value = '' }"
                     class="flex-grow bg-[#1F2937] border border-gray-600 rounded-lg px-3 py-1.5 text-xs text-gray-400 outline-none"
                  >
-                    <option value="" disabled selected>Add Friend to team...</option>
-                    <option v-for="friend in getAvailableForTeam(team.players)" :key="friend.player" :value="friend.player">
-                        {{ friend.player }} ({{ friend.points }} pts)
+                    <option value="" disabled selected>Add player to team...</option>
+                    <option v-for="player in getAvailableForTeam()" :key="player.player" :value="player.player">
+                        {{ player.player }}{{ player.points != null ? ` (${player.points} pts)` : '' }}
                     </option>
                  </select>
               </div>

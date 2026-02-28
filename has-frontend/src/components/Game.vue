@@ -73,7 +73,19 @@ const handleCreateGame = async (gameData) => {
         class="bg-[#0F172A] rounded-xl px-4 py-3 flex flex-col gap-y-1 border border-gray-700 hover:border-[#00C853] transition-colors cursor-pointer"
       >
         <div class="flex justify-between items-center">
-          <span class="font-bold text-[#E0E6F0] text-base truncate">{{ game.name }}</span>
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="font-bold text-[#E0E6F0] text-base truncate">{{ game.name }}</span>
+            <span
+              :class="[
+                'text-[10px] font-semibold px-1.5 py-0.5 rounded border shrink-0',
+                game.started_at
+                  ? 'bg-[#00C853]/10 border-[#00C853]/30 text-[#00C853]'
+                  : 'bg-[#FCD34D]/10 border-[#FCD34D]/30 text-[#FCD34D]'
+              ]"
+            >
+              {{ game.started_at ? 'Running' : 'Pending' }}
+            </span>
+          </div>
           <span class="text-xs text-gray-500 ml-2 shrink-0">
             {{ game.team_list?.length ?? 0 }} team{{ (game.team_list?.length ?? 0) !== 1 ? 's' : '' }}
           </span>

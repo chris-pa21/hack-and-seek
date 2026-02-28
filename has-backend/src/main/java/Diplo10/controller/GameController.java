@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -103,6 +104,29 @@ public class GameController {
         String username = authentication.getName();
         List<Game> games = this.gameRepository.findGamesByPlayer(username);
         return ResponseEntity.ok(games);
+    }
+
+    @GetMapping("/{gameId}")
+    public ResponseEntity<Game> getGame(@PathVariable Long gameId) {
+        Game game = this.gameRepository.findById(gameId)
+                .orElseThrow(() -> new NullPointerException("Game not found"));
+        return ResponseEntity.ok(game);
+    }
+
+    @PostMapping("/{gameId}/start")
+    public ResponseEntity<Game> startGame(@PathVariable Long gameId, Authentication authentication) {
+        Game game = this.gameRepository.findById(gameId)
+                .orElseThrow(() -> new NullPointerException("Game not found"));
+        String username = authentication.getName();
+        if (game.getCreated_by() == null || !game.getCreated_by().getPlayer().equals(username)) {
+            return ResponseEntity.status(403).build();
+        }
+        if (game.getStarted_at() != null) {
+            return ResponseEntity.badRequest().build();
+        }
+        game.setStarted_at(LocalDateTime.now());
+        game = gameRepository.save(game);
+        return ResponseEntity.ok(game);
     }
 
     @GetMapping("/{gameId}/teams")

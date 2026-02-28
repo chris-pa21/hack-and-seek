@@ -10,6 +10,14 @@ export default {
         return axios.get('/api/games')
     },
 
+    getGame(gameId) {
+        return axios.get(`/api/games/${gameId}`)
+    },
+
+    startGame(gameId) {
+        return axios.post(`/api/games/${gameId}/start`)
+    },
+
     deleteGame(gameId) {
         return axios.delete(`/api/games/${gameId}`)
     },

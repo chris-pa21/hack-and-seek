@@ -1,11 +1,23 @@
 @import "tailwindcss";
 
-body{
-    background-color: #0A0F1E;
-    color: #E0E6F0;
-    font-family: 'Fira Code', monospace;
+body {
+  background-color: #0A0F1E;
+  color: #E0E6F0;
+  font-family: 'Fira Code', monospace;
 }
 
 html {
   scroll-behavior: smooth;
+}
+
+.secondary-button {
+  @apply bg-[#1f2937] text-[#E0E6F0] font-semibold rounded-lg cursor-pointer px-6 py-2 text-base transition-all duration-300 hover:scale-105 hover:bg-[#334155] disabled:bg-[#111827] disabled:cursor-not-allowed disabled:scale-100;
+}
+
+.primary-button {
+  @apply bg-[#00C853] text-[#E0E6F0] font-semibold rounded-lg cursor-pointer px-6 py-2 text-base transition-all duration-300 hover:scale-105 hover:bg-[#009a40] disabled:bg-[#005724] disabled:cursor-not-allowed disabled:scale-100;
+}
+
+.danger-button {
+  @apply bg-[#DC0B00] text-[#E0E6F0] font-semibold rounded-lg cursor-pointer px-6 py-2 text-base transition-all duration-300 hover:scale-105 hover:bg-[#a00900] disabled:bg-[#7a0600] disabled:cursor-not-allowed disabled:scale-100;
 }

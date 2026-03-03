@@ -15,19 +15,19 @@ function toggleMenu() {
         <img class="cursor-pointer w-14 h-14" src="@/assets/img/logo.png" />
         <p class="cursor-pointer">Hack&Seek</p>
       </div>
-      <div class="hidden items-center space-x-8 sm:flex">
-        <p
+      <div class="hidden items-center space-x-4 sm:flex">
+        <button
           @click="$router.push('/login')"
-          class="cursor-pointer hover:text-[#018EF4] transition-all duration-200"
+          class="secondary-button"
         >
           Login
-        </p>
-        <p
+        </button>
+        <button
           @click="$router.push('/register')"
-          class="cursor-pointer hover:text-[#018EF4] transition-all duration-200"
+          class="secondary-button"
         >
           Register
-        </p>
+        </button>
       </div>
       <div @click="toggleMenu" class="cursor-pointer flex items-center sm:hidden">
         <div class="relative w-[25px] h-[25px] flex items-center justify-center">

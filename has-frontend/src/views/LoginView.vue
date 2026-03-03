@@ -76,10 +76,7 @@ const login = async () => {
         <button
           type="button"
           @click="login()"
-          :class="[
-            'bg-[#018EF4] text-xl font-semibold rounded-lg mt-8 min-w-30 min-h-9 cursor-pointer hover:scale-105 transition-all duration-300',
-            loading ? 'animate-pulse' : '',
-          ]"
+          :class="['primary-button mt-8', loading ? 'animate-pulse text-xl' : '']"
         >
           login
         </button>

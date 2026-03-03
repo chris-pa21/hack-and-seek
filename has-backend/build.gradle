@@ -30,19 +30,19 @@ dependencies {
     compileOnly 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
     testCompileOnly 'org.projectlombok:lombok:1.18.30'
-	// Docker-Java: Konsistente Version 3.3.4
-	implementation 'com.github.docker-java:docker-java-api:3.3.4'
-	implementation 'com.github.docker-java:docker-java-core:3.3.4'
-	implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.3.4'
-	implementation 'com.github.docker-java:docker-java:3.3.4'
+	// Docker-Java 3.7.0 (defaults to Docker API 1.44+)
+	implementation 'com.github.docker-java:docker-java-api:3.7.0'
+	implementation 'com.github.docker-java:docker-java-core:3.7.0'
+	implementation 'com.github.docker-java:docker-java-transport-httpclient5:3.7.0'
 
 	// Monitoring
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 
-	// Utils
-	implementation 'org.modelmapper:modelmapper:3.1.1'
+    // Utils
+    implementation 'org.modelmapper:modelmapper:3.1.1'
 
-
+    // .env file support
+    implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 }
 
 tasks.named('test') {

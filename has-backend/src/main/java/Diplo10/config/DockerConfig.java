@@ -3,8 +3,7 @@ package Diplo10.config;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
-import com.github.dockerjava.core.DockerClientImpl; // Falls Builder nicht gefunden wird
-import com.github.dockerjava.core.DockerClientBuilder;
+import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
 import org.springframework.context.annotation.Bean;
@@ -17,7 +16,9 @@ public class DockerConfig {
 
     @Bean
     public DockerClient dockerClient() {
-        DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
+        DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
+                .withDockerHost("unix:///var/run/docker.sock")
+                .build();
 
         DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
                 .dockerHost(config.getDockerHost())
@@ -27,8 +28,6 @@ public class DockerConfig {
                 .responseTimeout(Duration.ofSeconds(45))
                 .build();
 
-        return DockerClientBuilder.getInstance(config)
-                .withDockerHttpClient(httpClient)
-                .build();
+        return DockerClientImpl.getInstance(config, httpClient);
     }
 }

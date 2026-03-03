@@ -3,6 +3,7 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 LABEL type="challenge"
+LABEL difficulty="1"
 
 RUN apt-get update && apt-get install -y \
     openssh-server \

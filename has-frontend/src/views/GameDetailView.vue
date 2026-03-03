@@ -15,6 +15,23 @@ const isLoading = ref(true)
 const isStarting = ref(false)
 const flagInput = ref('')
 const flagMessage = ref('')
+const challenges = ref([])
+
+const difficultyColor = (name) => {
+  const c = challenges.value.find(ch => ch.name === name)
+  if (!c) return '#6B7280'
+  if (c.difficulty <= 1) return '#00C853'
+  if (c.difficulty === 2) return '#FCD34D'
+  return '#DC0B00'
+}
+
+const difficultyLabel = (name) => {
+  const c = challenges.value.find(ch => ch.name === name)
+  if (!c) return 'Unknown'
+  if (c.difficulty <= 1) return 'Easy'
+  if (c.difficulty === 2) return 'Medium'
+  return 'Hard'
+}
 
 const currentUsername = computed(() => {
   const user = authStore.currentUser
@@ -95,8 +112,12 @@ const displayTeamName = (name) => {
   return name?.split('_game')[0] ?? name
 }
 
-onMounted(() => {
+onMounted(async () => {
   fetchGame()
+  try {
+    const res = await GameService.getChallenges()
+    challenges.value = res.data
+  } catch (e) {}
 })
 </script>
 
@@ -168,7 +189,12 @@ onMounted(() => {
             >
               <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-[#E0E6F0]">{{ displayTeamName(team.name) }}</h3>
-                <span class="text-xs text-gray-500 bg-[#0F172A] px-2 py-1 rounded-md">{{ team.challenge }}</span>
+                <span
+                  class="text-xs font-semibold px-2 py-1 rounded-md border"
+                  :style="{ color: difficultyColor(team.challenge), borderColor: difficultyColor(team.challenge) + '4D', backgroundColor: difficultyColor(team.challenge) + '1A' }"
+                >
+                  {{ team.challenge }} · {{ difficultyLabel(team.challenge) }}
+                </span>
               </div>
               <div class="flex flex-wrap gap-2">
                 <span
@@ -257,7 +283,7 @@ onMounted(() => {
               {{ idx + 1 }}
             </span>
             <span class="col-span-5 font-semibold text-[#E0E6F0]">{{ displayTeamName(team.name) }}</span>
-            <span class="col-span-3 text-sm text-gray-400">{{ team.challenge }}</span>
+            <span class="col-span-3 text-sm font-semibold" :style="{ color: difficultyColor(team.challenge) }">{{ team.challenge }}</span>
             <span :class="['col-span-3 text-right font-bold text-base', idx === 0 ? 'text-[#FCD34D]' : 'text-[#E0E6F0]']">
               0 pts
             </span>

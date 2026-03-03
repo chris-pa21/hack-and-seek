@@ -1,5 +1,6 @@
 package Diplo10.controller;
 
+import Diplo10.dto.ChallengeDTO;
 import Diplo10.entity.Game;
 import Diplo10.entity.Player;
 import Diplo10.entity.Team;
@@ -7,8 +8,7 @@ import Diplo10.repository.GameRepository;
 import Diplo10.repository.PlayerRepository;
 import Diplo10.repository.TeamRepository;
 import Diplo10.service.GameService;
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.model.Image;
+import Diplo10.service.orchestration.ImageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -28,24 +28,11 @@ public class GameController {
     private final GameService gameService;
     private final TeamRepository teamRepository;
     private final PlayerRepository playerRepository;
-    private final DockerClient dockerClient;
+    private final ImageService imageService;
 
     @GetMapping("/challenges")
-    public ResponseEntity<List<String>> getChallenges() {
-        List<Image> images = dockerClient.listImagesCmd()
-                .withLabelFilter(java.util.Map.of("type", "challenge"))
-                .exec();
-
-        List<String> names = new ArrayList<>();
-        for (Image image : images) {
-            String[] tags = image.getRepoTags();
-            if (tags != null) {
-                for (String tag : tags) {
-                    names.add(tag);
-                }
-            }
-        }
-        return ResponseEntity.ok(names);
+    public ResponseEntity<List<ChallengeDTO>> getChallenges() {
+        return ResponseEntity.ok(imageService.listChallengeImages());
     }
 
     /**

@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -111,8 +110,10 @@ public class GameController {
         if (game.getStarted_at() != null) {
             return ResponseEntity.badRequest().build();
         }
-        game.setStarted_at(LocalDateTime.now());
-        game = gameRepository.save(game);
+        if (game.getTeam_list() == null || game.getTeam_list().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        game = gameService.startGame(game);
         return ResponseEntity.ok(game);
     }
 

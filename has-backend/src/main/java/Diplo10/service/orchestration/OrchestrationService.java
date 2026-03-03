@@ -1,12 +1,14 @@
 package Diplo10.service.orchestration;
 
 import Diplo10.entity.ContainerEntity;
+import Diplo10.entity.Game;
+import Diplo10.entity.Team;
 import Diplo10.repository.ContainerRepository;
 import com.github.dockerjava.api.DockerClient;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -14,56 +16,56 @@ public class OrchestrationService {
     private final ContainerService containerService;
     private final NetworkService networkService;
     private final ContainerRepository repository;
-    private DockerClient dockerclient;
+    private final DockerClient dockerclient;
 
     public OrchestrationService(ContainerService containerService, NetworkService networkService, ContainerRepository repository, DockerClient dockerclient) {
         this.containerService = containerService;
         this.networkService = networkService;
         this.repository = repository;
         this.dockerclient = dockerclient;
-
     }
 
     @Transactional
-    public ContainerEntity setupGameForTeam(String teamName, String challengeImage, String teamPlayers) {
-        // 1. Isoliertes Netzwerk erstellen
-        String netId = networkService.createIsolatedNetwork(teamName);
-        String result = containerService.spawnChallengeContainer(challengeImage, teamName, netId);
+    public ContainerEntity setupTeamContainer(Game game, Team team, String networkId) {
+        String teamName = team.getName();
+        String challengeImage = team.getChallenge();
+
+        // Spawn container in the game's shared network
+        String result = containerService.spawnChallengeContainer(challengeImage, teamName, networkId);
         String[] parts = result.split(":");
         String containerId = parts[0];
-        Integer port = Integer.parseInt(parts[1]);
+        Integer port = parts.length > 1 ? Integer.parseInt(parts[1]) : null;
 
-        // 2. Container im Netzwerk starten
-
-        // 3. Im Repository speichern für Reproduzierbarkeit/Monitoring
+        // Save to DB with proper relationships
         ContainerEntity entity = ContainerEntity.builder()
                 .containerId(containerId)
-                .teamName(teamName)
-                .networkId(netId)
+                .team(team)
+                .game(game)
+                .networkId(networkId)
                 .image(challengeImage)
-                .teamPlayers(teamPlayers)
                 .publicPort(port)
+                .createdAt(LocalDateTime.now())
                 .build();
 
         return repository.save(entity);
     }
+
     @Transactional
-    public void terminateGame(String teamName) {
-        List<ContainerEntity> containers = repository.findByTeamName(teamName);
+    public void terminateGame(Game game) {
+        List<ContainerEntity> containers = repository.findByGame(game);
 
         for (ContainerEntity entity : containers) {
             try {
                 dockerclient.removeContainerCmd(entity.getContainerId())
                         .withForce(true)
                         .exec();
-
-                repository.delete(entity);
-
-                dockerclient.removeNetworkCmd(entity.getNetworkId()).exec();
             } catch (Exception e) {
-                System.err.println("Fehler beim Entfernen von Container " + entity.getContainerId() + ": " + e.getMessage());
+                System.err.println("Error removing container " + entity.getContainerId() + ": " + e.getMessage());
             }
         }
-        networkService.deleteIsolatedNetwork(teamName);
+        repository.deleteAll(containers);
+
+        // Remove the shared game network
+        networkService.deleteIsolatedNetwork(game.getName());
     }
 }

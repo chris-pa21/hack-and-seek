@@ -17,8 +17,8 @@ public class NetworkService {
         this.dockerClient = dockerClient;
     }
 
-    public String createIsolatedNetwork(String teamName) {
-        String networkName = "net_" + teamName;
+    public String createIsolatedNetwork(String gameName) {
+        String networkName = "net_" + gameName;
         vpn.includeNetwork(networkName);
 
         // Prüfen, ob Netzwerk bereits existiert (Reproduzierbarkeit)
@@ -35,8 +35,8 @@ public class NetworkService {
                 .exec().getId();
     }
 
-    public void deleteIsolatedNetwork(String teamName) {
-        String networkName = "net_" + teamName;
+    public void deleteIsolatedNetwork(String gameName) {
+        String networkName = "net_" + gameName;
 
         vpn.excludeNetwork(networkName);
 

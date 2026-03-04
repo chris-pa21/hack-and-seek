@@ -31,5 +31,6 @@ public class ContainerEntity {
     private String networkId;
     private String image;
     private LocalDateTime createdAt;
-    private Integer publicPort;
+    private String ipAddress;
+    private String flag;
 }

@@ -16,6 +16,7 @@ const isStarting = ref(false)
 const flagInput = ref('')
 const flagMessage = ref('')
 const challenges = ref([])
+const containerMap = ref({})
 
 const difficultyColor = (name) => {
   const c = challenges.value.find(ch => ch.name === name)
@@ -50,11 +51,29 @@ const teams = computed(() => {
   return game.value?.team_list ?? []
 })
 
+const fetchContainers = async () => {
+  try {
+    const res = await GameService.getContainers(gameId)
+    const map = {}
+    for (const c of res.data) {
+      if (c.team?.name) {
+        map[c.team.name] = c.ipAddress
+      }
+    }
+    containerMap.value = map
+  } catch (e) {
+    console.error('Failed to fetch containers:', e)
+  }
+}
+
 const fetchGame = async () => {
   isLoading.value = true
   try {
     const response = await GameService.getGame(gameId)
     game.value = response.data
+    if (response.data?.started_at) {
+      await fetchContainers()
+    }
   } catch (error) {
     console.error('Failed to fetch game:', error)
   } finally {
@@ -68,6 +87,7 @@ const startGame = async () => {
   try {
     const response = await GameService.startGame(gameId)
     game.value = response.data
+    await fetchContainers()
   } catch (error) {
     console.error('Failed to start game:', error)
   } finally {
@@ -267,8 +287,9 @@ onMounted(async () => {
           <!-- Table Header -->
           <div class="grid grid-cols-12 px-6 py-3 bg-[#0F172A] text-xs font-semibold text-gray-500 uppercase tracking-wider">
             <span class="col-span-1">#</span>
-            <span class="col-span-5">Team</span>
-            <span class="col-span-3">Challenge</span>
+            <span class="col-span-3">Team</span>
+            <span class="col-span-3">IP Address</span>
+            <span class="col-span-2">Challenge</span>
             <span class="col-span-3 text-right">Points</span>
           </div>
 
@@ -282,8 +303,9 @@ onMounted(async () => {
             <span :class="['col-span-1 font-bold text-lg', idx === 0 ? 'text-[#FCD34D]' : 'text-gray-500']">
               {{ idx + 1 }}
             </span>
-            <span class="col-span-5 font-semibold text-[#E0E6F0]">{{ displayTeamName(team.name) }}</span>
-            <span class="col-span-3 text-sm font-semibold" :style="{ color: difficultyColor(team.challenge) }">{{ team.challenge }}</span>
+            <span class="col-span-3 font-semibold text-[#E0E6F0]">{{ displayTeamName(team.name) }}</span>
+            <span class="col-span-3 font-mono text-sm text-gray-400">{{ containerMap[team.name] || '—' }}</span>
+            <span class="col-span-2 text-sm font-semibold" :style="{ color: difficultyColor(team.challenge) }">{{ team.challenge }}</span>
             <span :class="['col-span-3 text-right font-bold text-base', idx === 0 ? 'text-[#FCD34D]' : 'text-[#E0E6F0]']">
               0 pts
             </span>

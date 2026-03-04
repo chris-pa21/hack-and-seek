@@ -1,3 +1,3 @@
 package Diplo10.service.orchestration;
 
-public record SpawnResult(String containerId, String ipAddress, String flag) {}
+public record SpawnResult(String containerId, String ipAddress, String flag, int points) {}

@@ -33,4 +33,5 @@ public class ContainerEntity {
     private LocalDateTime createdAt;
     private String ipAddress;
     private String flag;
+    private Integer points;
 }

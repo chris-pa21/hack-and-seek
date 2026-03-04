@@ -15,8 +15,10 @@ const isLoading = ref(true)
 const isStarting = ref(false)
 const flagInput = ref('')
 const flagMessage = ref('')
+const flagError = ref(false)
 const challenges = ref([])
 const containerMap = ref({})
+const defeatLog = ref([])
 
 const difficultyColor = (name) => {
   const c = challenges.value.find(ch => ch.name === name)
@@ -51,6 +53,29 @@ const teams = computed(() => {
   return game.value?.team_list ?? []
 })
 
+const myTeam = computed(() => {
+  return teams.value.find(t =>
+    t.team_members?.some(m => m.player === currentUsername.value)
+  )
+})
+
+const isDefeated = computed(() => {
+  return myTeam.value?.defeated === true
+})
+
+const sortedTeams = computed(() => {
+  return [...teams.value].sort((a, b) => (b.score || 0) - (a.score || 0))
+})
+
+const fetchDefeatLog = async () => {
+  try {
+    const res = await GameService.getDefeatLog(gameId)
+    defeatLog.value = res.data
+  } catch (e) {
+    console.error('Failed to fetch defeat log:', e)
+  }
+}
+
 const fetchContainers = async () => {
   try {
     const res = await GameService.getContainers(gameId)
@@ -73,6 +98,7 @@ const fetchGame = async () => {
     game.value = response.data
     if (response.data?.started_at) {
       await fetchContainers()
+      await fetchDefeatLog()
     }
   } catch (error) {
     console.error('Failed to fetch game:', error)
@@ -95,11 +121,25 @@ const startGame = async () => {
   }
 }
 
-const submitFlag = () => {
+const submitFlag = async () => {
   if (!flagInput.value.trim()) return
-  flagMessage.value = `Flag "${flagInput.value.trim()}" submitted.`
-  flagInput.value = ''
-  setTimeout(() => { flagMessage.value = '' }, 3000)
+  flagMessage.value = ''
+  flagError.value = false
+  try {
+    const res = await GameService.submitFlag(gameId, flagInput.value.trim())
+    const data = res.data
+    flagMessage.value = data.message
+    flagError.value = !data.success
+    if (data.success) {
+      flagInput.value = ''
+      await fetchGame()
+      await fetchDefeatLog()
+    }
+  } catch (e) {
+    flagMessage.value = 'Failed to submit flag'
+    flagError.value = true
+  }
+  setTimeout(() => { flagMessage.value = '' }, 5000)
 }
 
 const downloadConfig = () => {
@@ -259,17 +299,22 @@ onMounted(async () => {
             <h2 class="text-2xl font-bold text-[#E0E6F0]">Submit Flag</h2>
           </div>
           <div class="px-6 py-5">
-            <div class="flex gap-3">
-              <input
-                v-model="flagInput"
-                type="text"
-                placeholder="HAS{...}"
-                @keyup.enter="submitFlag"
-                class="flex-grow bg-[#0F172A] border border-gray-700 rounded-lg px-4 py-3 text-[#E0E6F0] font-mono focus:ring-2 focus:ring-[#00C853] focus:border-transparent outline-none transition-all"
-              />
-              <button @click="submitFlag" class="primary-button px-6">Submit</button>
+            <div v-if="isDefeated" class="text-[#DC0B00] text-sm font-semibold">
+              Your team has been defeated. You can no longer submit flags.
             </div>
-            <p v-if="flagMessage" class="mt-3 text-sm text-[#00C853]">{{ flagMessage }}</p>
+            <template v-else>
+              <div class="flex gap-3">
+                <input
+                  v-model="flagInput"
+                  type="text"
+                  placeholder="HAS{...}"
+                  @keyup.enter="submitFlag"
+                  class="flex-grow bg-[#0F172A] border border-gray-700 rounded-lg px-4 py-3 text-[#E0E6F0] font-mono focus:ring-2 focus:ring-[#00C853] focus:border-transparent outline-none transition-all"
+                />
+                <button @click="submitFlag" class="primary-button px-6">Submit</button>
+              </div>
+              <p v-if="flagMessage" class="mt-3 text-sm" :class="flagError ? 'text-[#DC0B00]' : 'text-[#00C853]'">{{ flagMessage }}</p>
+            </template>
           </div>
         </div>
 
@@ -295,19 +340,25 @@ onMounted(async () => {
 
           <!-- Rows from real team data -->
           <div
-            v-for="(team, idx) in teams"
+            v-for="(team, idx) in sortedTeams"
             :key="team.name"
-            class="grid grid-cols-12 items-center px-6 py-4 border-b border-gray-800 transition-colors border-l-4 border-l-transparent"
-            :class="idx % 2 === 0 ? 'bg-[#0F172A]/40' : ''"
+            class="grid grid-cols-12 items-center px-6 py-4 border-b border-gray-800 transition-colors"
+            :class="[
+              idx % 2 === 0 ? 'bg-[#0F172A]/40' : '',
+              team.defeated ? 'border-l-4 border-l-[#DC0B00] opacity-60' : 'border-l-4 border-l-transparent'
+            ]"
           >
-            <span :class="['col-span-1 font-bold text-lg', idx === 0 ? 'text-[#FCD34D]' : 'text-gray-500']">
+            <span :class="['col-span-1 font-bold text-lg', idx === 0 && !team.defeated ? 'text-[#FCD34D]' : 'text-gray-500']">
               {{ idx + 1 }}
             </span>
-            <span class="col-span-3 font-semibold text-[#E0E6F0]">{{ displayTeamName(team.name) }}</span>
+            <span class="col-span-3 font-semibold text-[#E0E6F0] flex items-center gap-2">
+              {{ displayTeamName(team.name) }}
+              <span v-if="team.defeated" class="text-xs px-2 py-0.5 rounded-md bg-[#DC0B00]/10 border border-[#DC0B00]/30 text-[#DC0B00]">Defeated</span>
+            </span>
             <span class="col-span-3 font-mono text-sm text-gray-400">{{ containerMap[team.name] || '—' }}</span>
             <span class="col-span-2 text-sm font-semibold" :style="{ color: difficultyColor(team.challenge) }">{{ team.challenge }}</span>
-            <span :class="['col-span-3 text-right font-bold text-base', idx === 0 ? 'text-[#FCD34D]' : 'text-[#E0E6F0]']">
-              0 pts
+            <span :class="['col-span-3 text-right font-bold text-base', idx === 0 && !team.defeated ? 'text-[#FCD34D]' : 'text-[#E0E6F0]']">
+              {{ team.score || 0 }} pts
             </span>
           </div>
 
@@ -321,8 +372,25 @@ onMounted(async () => {
           <div class="px-6 py-4 border-b border-gray-700">
             <h2 class="text-2xl font-bold text-[#E0E6F0]">Defeat Log</h2>
           </div>
-          <div class="px-6 py-8 text-center text-gray-500 text-sm">
+          <div v-if="defeatLog.length === 0" class="px-6 py-8 text-center text-gray-500 text-sm">
             No captures yet.
+          </div>
+          <div v-else class="divide-y divide-gray-800">
+            <div
+              v-for="entry in defeatLog"
+              :key="entry.id"
+              class="px-6 py-4 flex items-center justify-between"
+            >
+              <div class="text-sm text-[#E0E6F0]">
+                <span class="text-[#00C853] font-semibold">{{ displayTeamName(entry.attackingTeam) }}</span>
+                <span class="text-gray-500"> captured </span>
+                <span class="text-[#DC0B00] font-semibold">{{ displayTeamName(entry.defeatedTeam) }}</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-[#FCD34D] font-bold text-sm">+{{ entry.pointsAwarded }} pts</span>
+                <span class="text-xs text-gray-600">{{ new Date(entry.submittedAt).toLocaleTimeString() }}</span>
+              </div>
+            </div>
           </div>
         </div>
 

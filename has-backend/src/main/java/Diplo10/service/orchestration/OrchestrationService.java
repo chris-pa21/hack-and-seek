@@ -35,6 +35,7 @@ public class OrchestrationService {
         String containerId = result.containerId();
         String ipAddress = result.ipAddress();
         String flag = result.flag();
+        int points = result.points();
 
         // Save to DB with proper relationships
         ContainerEntity entity = ContainerEntity.builder()
@@ -45,6 +46,7 @@ public class OrchestrationService {
                 .image(challengeImage)
                 .ipAddress(ipAddress)
                 .flag(flag)
+                .points(points)
                 .createdAt(LocalDateTime.now())
                 .build();
 

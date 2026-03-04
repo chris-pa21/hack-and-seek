@@ -1,12 +1,14 @@
 package Diplo10.controller;
 
 import Diplo10.dto.ChallengeDTO;
+import Diplo10.entity.FlagSubmission;
 import Diplo10.entity.Game;
 import Diplo10.entity.Player;
 import Diplo10.entity.Team;
 import Diplo10.repository.GameRepository;
 import Diplo10.repository.PlayerRepository;
 import Diplo10.repository.TeamRepository;
+import Diplo10.service.FlagService;
 import Diplo10.service.GameService;
 import Diplo10.service.orchestration.ImageService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/games")
@@ -28,6 +31,7 @@ public class GameController {
     private final TeamRepository teamRepository;
     private final PlayerRepository playerRepository;
     private final ImageService imageService;
+    private final FlagService flagService;
 
     @GetMapping("/challenges")
     public ResponseEntity<List<ChallengeDTO>> getChallenges() {
@@ -147,5 +151,24 @@ public class GameController {
     public ResponseEntity<Void> deleteTeam(@PathVariable Long gameId, @PathVariable String teamId) {
         this.gameService.deleteTeam(teamId, gameId);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{gameId}/submit-flag")
+    public ResponseEntity<Map<String, Object>> submitFlag(
+            @PathVariable Long gameId,
+            @RequestBody Map<String, String> body,
+            Authentication authentication) {
+        String flag = body.get("flag");
+        if (flag == null || flag.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Flag is required"));
+        }
+        String username = authentication.getName();
+        Map<String, Object> result = flagService.submitFlag(gameId, username, flag.trim());
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{gameId}/defeat-log")
+    public ResponseEntity<List<FlagSubmission>> getDefeatLog(@PathVariable Long gameId) {
+        return ResponseEntity.ok(flagService.getDefeatLog(gameId));
     }
 }

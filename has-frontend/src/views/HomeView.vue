@@ -64,14 +64,14 @@ import Navbar from '@/components/Navbar.vue'
     id="how"
     class="bg-[#0A0F1E] flex items-center justify-center flex-col-reverse min-h-[40vh] p-10 gap-10 lg:flex-row sm:gap-20 lg:gap-40 xl:gap-50 2xl:gap-100 transition-all duration-300"
   >
-    <p class=”text-[#9CA3AF] text-center lg:text-left max-w-125 text-md”>
-      Hack&Seek is an Attack-Defense CTF platform. Each team gets an identical vulnerable service
-      to defend while simultaneously attacking opponents' services to capture their flags. Find
+    <p class="text-[#9CA3AF] text-center lg:text-left max-w-125 text-md">
+      Hack&Seek is an Attack-Defense CTF platform. Each team gets an identical vulnerable service to
+      defend while simultaneously attacking opponents' services to capture their flags. Find
       weaknesses in other teams' containers, steal their flags, and submit them for points — all
       while patching your own service to keep it secure. Games run in isolated networks with
       WireGuard VPN, so every match is a fair and contained battlefield.
     </p>
-    <h1 class=”text-center font-semibold text-5xl flex justify-center”>How does Hack&Seek work?</h1>
+    <h1 class="text-center font-semibold text-5xl flex justify-center">How does Hack&Seek work?</h1>
   </div>
 </template>
 

@@ -25,6 +25,13 @@ public class ContainerService {
                 ? imageLabels.get("flag_path")
                 : "/home/flag.txt";
 
+        int points = 100; // default
+        if (imageLabels != null && imageLabels.containsKey("points")) {
+            try {
+                points = Integer.parseInt(imageLabels.get("points"));
+            } catch (NumberFormatException ignored) {}
+        }
+
         HostConfig hostConfig = HostConfig.newHostConfig()
                 .withNetworkMode(networkId)
                 .withMemory(128 * 1024 * 1024L) // 128MB RAM Limit (Sicherheit/Skalierbarkeit)
@@ -60,7 +67,7 @@ public class ContainerService {
                 .exec().getId();
         dockerClient.execStartCmd(execId).exec(new ResultCallback.Adapter<Frame>());
 
-        return new SpawnResult(containerId, ipAddress, flag);
+        return new SpawnResult(containerId, ipAddress, flag, points);
     }
 
     private String generateFlag() {

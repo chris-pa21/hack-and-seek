@@ -3,10 +3,12 @@ package Diplo10.service;
 import Diplo10.entity.ContainerEntity;
 import Diplo10.entity.FlagSubmission;
 import Diplo10.entity.Game;
+import Diplo10.entity.Player;
 import Diplo10.entity.Team;
 import Diplo10.repository.ContainerRepository;
 import Diplo10.repository.FlagSubmissionRepository;
 import Diplo10.repository.GameRepository;
+import Diplo10.repository.PlayerRepository;
 import Diplo10.repository.TeamRepository;
 import com.github.dockerjava.api.DockerClient;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class FlagService {
     private final TeamRepository teamRepository;
     private final ContainerRepository containerRepository;
     private final FlagSubmissionRepository flagSubmissionRepository;
+    private final PlayerRepository playerRepository;
     private final DockerClient dockerClient;
 
     @Transactional
@@ -94,6 +97,12 @@ public class FlagService {
         // Award points to attacking team
         attackingTeam.setScore(attackingTeam.getScore() + points);
         teamRepository.save(attackingTeam);
+
+        // Award points to each player in the attacking team
+        for (Player member : attackingTeam.getTeam_members()) {
+            member.setPoints((member.getPoints() != null ? member.getPoints() : 0) + points);
+            playerRepository.save(member);
+        }
 
         // Defeat the target team
         targetTeam.setDefeated(true);

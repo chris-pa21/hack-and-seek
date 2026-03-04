@@ -4,6 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 LABEL type="challenge"
 LABEL difficulty="1"
+LABEL flag_path="/home/jdoe/flag.txt"
 
 RUN apt-get update && apt-get install -y \
     openssh-server \

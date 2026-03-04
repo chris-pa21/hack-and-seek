@@ -25,4 +25,8 @@ export default {
     getChallenges() {
         return axios.get('/api/games/challenges')
     },
+
+    getContainers(gameId) {
+        return axios.get(`/api/orchestration/session/game/${gameId}`)
+    },
 }

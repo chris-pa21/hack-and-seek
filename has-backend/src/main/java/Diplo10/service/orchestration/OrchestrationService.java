@@ -31,10 +31,10 @@ public class OrchestrationService {
         String challengeImage = team.getChallenge();
 
         // Spawn container in the game's shared network
-        String result = containerService.spawnChallengeContainer(challengeImage, teamName, networkId);
-        String[] parts = result.split(":");
-        String containerId = parts[0];
-        Integer port = parts.length > 1 ? Integer.parseInt(parts[1]) : null;
+        SpawnResult result = containerService.spawnChallengeContainer(challengeImage, teamName, networkId);
+        String containerId = result.containerId();
+        String ipAddress = result.ipAddress();
+        String flag = result.flag();
 
         // Save to DB with proper relationships
         ContainerEntity entity = ContainerEntity.builder()
@@ -43,7 +43,8 @@ public class OrchestrationService {
                 .game(game)
                 .networkId(networkId)
                 .image(challengeImage)
-                .publicPort(port)
+                .ipAddress(ipAddress)
+                .flag(flag)
                 .createdAt(LocalDateTime.now())
                 .build();
 

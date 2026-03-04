@@ -355,7 +355,7 @@ onMounted(async () => {
               {{ displayTeamName(team.name) }}
               <span v-if="team.defeated" class="text-xs px-2 py-0.5 rounded-md bg-[#DC0B00]/10 border border-[#DC0B00]/30 text-[#DC0B00]">Defeated</span>
             </span>
-            <span class="col-span-3 font-mono text-sm text-gray-400">{{ containerMap[team.name] || '—' }}</span>
+            <span :class="['col-span-3 font-mono text-sm', team.name === myTeam?.name ? 'text-[#E0E6F0]' : 'text-gray-400']">{{ containerMap[team.name] || '—' }}</span>
             <span class="col-span-2 text-sm font-semibold" :style="{ color: difficultyColor(team.challenge) }">{{ team.challenge }}</span>
             <span :class="['col-span-3 text-right font-bold text-base', idx === 0 && !team.defeated ? 'text-[#FCD34D]' : 'text-[#E0E6F0]']">
               {{ team.score || 0 }} pts

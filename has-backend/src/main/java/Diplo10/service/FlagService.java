@@ -108,11 +108,13 @@ public class FlagService {
         targetTeam.setDefeated(true);
         teamRepository.save(targetTeam);
 
-        // Stop the defeated team's container
+        // Stop and remove the defeated team's container
         try {
             dockerClient.stopContainerCmd(targetContainer.getContainerId()).exec();
+            dockerClient.removeContainerCmd(targetContainer.getContainerId()).exec();
+            containerRepository.delete(targetContainer);
         } catch (Exception e) {
-            System.err.println("Failed to stop container " + targetContainer.getContainerId() + ": " + e.getMessage());
+            System.err.println("Failed to stop/remove container " + targetContainer.getContainerId() + ": " + e.getMessage());
         }
 
         return Map.of(

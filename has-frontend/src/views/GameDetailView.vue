@@ -263,7 +263,7 @@ onMounted(async () => {
               <input
                 v-model="flagInput"
                 type="text"
-                placeholder="FLAG{...}"
+                placeholder="HAS{...}"
                 @keyup.enter="submitFlag"
                 class="flex-grow bg-[#0F172A] border border-gray-700 rounded-lg px-4 py-3 text-[#E0E6F0] font-mono focus:ring-2 focus:ring-[#00C853] focus:border-transparent outline-none transition-all"
               />

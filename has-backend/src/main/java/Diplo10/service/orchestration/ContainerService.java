@@ -1,11 +1,13 @@
 package Diplo10.service.orchestration;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.api.model.Ports;
 import com.github.dockerjava.api.model.RestartPolicy;
 import org.springframework.stereotype.Service;
-import com.github.dockerjava.api.model.ExposedPort;
+
+import java.security.SecureRandom;
 
 @Service
 public class ContainerService {
@@ -15,36 +17,58 @@ public class ContainerService {
         this.dockerClient = dockerClient;
     }
 
-    public String spawnChallengeContainer(String imageName, String teamName, String networkId) {
-        ExposedPort tcp80 = ExposedPort.tcp(80);
-        Ports portBindings = new Ports();
-        portBindings.bind(tcp80, Ports.Binding.empty());
+    public SpawnResult spawnChallengeContainer(String imageName, String teamName, String networkId) {
+        // Read flag_path label from the image
+        var imageInspect = dockerClient.inspectImageCmd(imageName).exec();
+        var imageLabels = imageInspect.getConfig().getLabels();
+        String flagPath = (imageLabels != null && imageLabels.containsKey("flag_path"))
+                ? imageLabels.get("flag_path")
+                : "/home/flag.txt";
 
         HostConfig hostConfig = HostConfig.newHostConfig()
                 .withNetworkMode(networkId)
-                .withMemory(512 * 1024 * 1024L) // 512MB RAM Limit (Sicherheit/Skalierbarkeit)
+                .withMemory(128 * 1024 * 1024L) // 128MB RAM Limit (Sicherheit/Skalierbarkeit)
                 .withCpuQuota(50000L)            // 0.5 CPU Cores Limit
                 .withRestartPolicy(RestartPolicy.unlessStoppedRestart());
 
         String containerId = dockerClient.createContainerCmd(imageName)
                 .withName(teamName + "_" + System.currentTimeMillis())
-                .withHostConfig(hostConfig.newHostConfig())
+                .withHostConfig(hostConfig)
                 .withNetworkMode(networkId)
-                .withPortBindings(portBindings)
-                .withExposedPorts(tcp80)
                 .withLabels(java.util.Map.of("owner", teamName, "type", "challenge"))
                 .exec().getId();
 
         dockerClient.startContainerCmd(containerId).exec();
 
         var inspectResponse = dockerClient.inspectContainerCmd(containerId).exec();
-        var bindings = inspectResponse.getNetworkSettings().getPorts().getBindings().get(tcp80);
 
-        if (bindings != null && bindings.length > 0) {
-            String hostPort = bindings[0].getHostPortSpec();
-            // Diesen Port geben wir jetzt zurück oder speichern ihn direkt
-            return containerId + ":" + hostPort;
+        String ipAddress = "";
+        var networks = inspectResponse.getNetworkSettings().getNetworks();
+        if (networks != null) {
+            for (var entry : networks.values()) {
+                if (entry.getIpAddress() != null && !entry.getIpAddress().isEmpty()) {
+                    ipAddress = entry.getIpAddress();
+                    break;
+                }
+            }
         }
-        return containerId;
+
+        // Generate random flag and write it into the container
+        String flag = generateFlag();
+        String execId = dockerClient.execCreateCmd(containerId)
+                .withCmd("sh", "-c", "echo '" + flag + "' > " + flagPath)
+                .exec().getId();
+        dockerClient.execStartCmd(execId).exec(new ResultCallback.Adapter<Frame>());
+
+        return new SpawnResult(containerId, ipAddress, flag);
+    }
+
+    private String generateFlag() {
+        SecureRandom random = new SecureRandom();
+        StringBuilder hex = new StringBuilder(32);
+        for (int i = 0; i < 32; i++) {
+            hex.append(Integer.toHexString(random.nextInt(16)));
+        }
+        return "HAS{" + hex + "}";
     }
 }

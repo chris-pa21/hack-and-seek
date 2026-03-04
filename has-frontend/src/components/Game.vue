@@ -8,6 +8,15 @@ const router = useRouter()
 const isModalOpen = ref(false)
 const games = ref([])
 const isLoading = ref(false)
+const challenges = ref([])
+
+const difficultyColor = (name) => {
+  const c = challenges.value.find(ch => ch.name === name)
+  if (!c) return '#6B7280'
+  if (c.difficulty <= 1) return '#00C853'
+  if (c.difficulty === 2) return '#FCD34D'
+  return '#DC0B00'
+}
 
 const fetchGames = async () => {
   isLoading.value = true
@@ -21,8 +30,12 @@ const fetchGames = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   fetchGames()
+  try {
+    const res = await GameService.getChallenges()
+    challenges.value = res.data
+  } catch (e) {}
 })
 
 const handleCreateGame = async (gameData) => {
@@ -97,7 +110,8 @@ const handleCreateGame = async (gameData) => {
             class="bg-[#1F2937] text-[#00C853] text-xs px-2 py-0.5 rounded-md border border-[#00C853]/30"
           >
             {{ team.name.split('_game')[0] }}
-            <span class="text-gray-500">· {{ team.challenge }}</span>
+            <span class="text-gray-500">·</span>
+            <span :style="{ color: difficultyColor(team.challenge) }">{{ team.challenge }}</span>
           </span>
         </div>
       </div>

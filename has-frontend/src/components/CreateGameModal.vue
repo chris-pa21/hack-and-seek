@@ -53,8 +53,9 @@ watch(() => props.show, (newVal) => {
 const addTeam = () => {
   teams.value.push({
     name: '',
-    selectedChallenge: challenges.value[0] ?? '',
-    players: []
+    selectedChallenge: challenges.value[0]?.name ?? '',
+    players: [],
+    dropdownOpen: false
   })
 }
 
@@ -103,6 +104,22 @@ const resetForm = () => {
 
 const close = () => {
   emit('close')
+}
+
+const difficultyColor = (name) => {
+  const c = challenges.value.find(ch => ch.name === name)
+  if (!c) return '#6B7280'
+  if (c.difficulty <= 1) return '#00C853'
+  if (c.difficulty === 2) return '#FCD34D'
+  return '#DC0B00'
+}
+
+const difficultyLabel = (name) => {
+  const c = challenges.value.find(ch => ch.name === name)
+  if (!c) return 'Unknown'
+  if (c.difficulty <= 1) return 'Easy'
+  if (c.difficulty === 2) return 'Medium'
+  return 'Hard'
 }
 
 // Collect all players already assigned to any team
@@ -170,14 +187,35 @@ const getAvailableForTeam = () => {
               </div>
 
               <!-- Challenge Select -->
-              <div class="space-y-1">
+              <div class="space-y-1 relative">
                 <label class="text-xs text-gray-500 uppercase">Challenge</label>
-                <select 
-                  v-model="team.selectedChallenge"
-                  class="w-full bg-[#1F2937] border border-gray-600 rounded-lg px-3 py-2 text-sm text-[#E0E6F0] outline-none focus:border-[#00C853] appearance-none cursor-pointer"
+                <button
+                  type="button"
+                  @click="team.dropdownOpen = !team.dropdownOpen"
+                  class="w-full bg-[#1F2937] border border-gray-600 rounded-lg px-3 py-2 text-sm text-[#E0E6F0] outline-none focus:border-[#00C853] cursor-pointer flex items-center gap-2 text-left"
                 >
-                  <option v-for="c in challenges" :key="c" :value="c">{{ c }}</option>
-                </select>
+                  <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: difficultyColor(team.selectedChallenge) }"></span>
+                  <span class="flex-grow">{{ team.selectedChallenge || 'Select challenge...' }}</span>
+                  <span class="text-gray-500 text-xs">{{ difficultyLabel(team.selectedChallenge) }}</span>
+                </button>
+                <div
+                  v-if="team.dropdownOpen"
+                  class="absolute z-10 mt-1 w-full bg-[#1F2937] border border-gray-600 rounded-lg overflow-hidden shadow-lg"
+                >
+                  <div
+                    v-for="c in challenges"
+                    :key="c.name"
+                    @click="team.selectedChallenge = c.name; team.dropdownOpen = false"
+                    class="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-[#0F172A] transition-colors"
+                    :class="team.selectedChallenge === c.name ? 'bg-[#0F172A] text-[#E0E6F0]' : 'text-gray-400'"
+                  >
+                    <span class="w-2 h-2 rounded-full shrink-0" :style="{ backgroundColor: difficultyColor(c.name) }"></span>
+                    <span class="flex-grow">{{ c.name }}</span>
+                    <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded border" :style="{ color: difficultyColor(c.name), borderColor: difficultyColor(c.name) + '4D', backgroundColor: difficultyColor(c.name) + '1A' }">
+                      {{ difficultyLabel(c.name) }}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
 

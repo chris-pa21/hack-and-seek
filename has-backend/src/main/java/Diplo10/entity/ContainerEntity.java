@@ -1,8 +1,6 @@
 package Diplo10.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,11 +15,22 @@ import java.time.LocalDateTime;
 @Builder
 public class ContainerEntity {
     @Id
-    private String containerId; // Die ID von Docker
-    private String teamName;
-    private String teamPlayers; // Optional: Namen der Spieler im Team, als String oder JSON
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+
+    private String containerId;
+
+    @OneToOne
+    @JoinColumn(name = "team_name")
+    private Team team;
+
+    @ManyToOne
+    @JoinColumn(name = "game_id")
+    private Game game;
+
     private String networkId;
     private String image;
     private LocalDateTime createdAt;
-    private Integer publicPort;
+    private String ipAddress;
+    private String flag;
 }

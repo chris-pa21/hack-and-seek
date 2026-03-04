@@ -5,8 +5,12 @@ import Diplo10.entity.Player;
 import Diplo10.entity.Team;
 import Diplo10.repository.GameRepository;
 import Diplo10.repository.TeamRepository;
+import Diplo10.service.orchestration.NetworkService;
+import Diplo10.service.orchestration.OrchestrationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -14,6 +18,8 @@ public class GameService {
 
     private final GameRepository gameRepository;
     private final TeamRepository teamRepository;
+    private final OrchestrationService orchestrationService;
+    private final NetworkService networkService;
 
     public void addTeam(Team team, Long gameId) {
         Game game = this.gameRepository.findById(gameId).get();
@@ -33,6 +39,25 @@ public class GameService {
         Game game = this.gameRepository.findById(gameId).get();
         game.deleteTeam(team);
         gameRepository.save(game);
+    }
+
+    public Game startGame(Game game) {
+        game.setStarted_at(LocalDateTime.now());
+        game = gameRepository.save(game);
+
+        // Create one shared network for the entire game
+        String networkId = networkService.createIsolatedNetwork(game.getName());
+
+        // Start a container for each team
+        for (Team team : game.getTeam_list()) {
+            try {
+                orchestrationService.setupTeamContainer(game, team, networkId);
+            } catch (Exception e) {
+                System.err.println("Failed to start container for team " + team.getName() + ": " + e.getMessage());
+            }
+        }
+
+        return game;
     }
 
     public void deletePlayer(String teamId, Long gameId, Player player) {

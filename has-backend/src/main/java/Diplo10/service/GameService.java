@@ -11,6 +11,7 @@ import Diplo10.service.orchestration.OrchestrationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import jakarta.transaction.Transactional;
 import java.time.LocalDateTime;
 
 @Service
@@ -43,6 +44,7 @@ public class GameService {
         gameRepository.save(game);
     }
 
+    @Transactional
     public Game startGame(Game game) {
         game.setStarted_at(LocalDateTime.now());
         game = gameRepository.save(game);

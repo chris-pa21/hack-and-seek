@@ -63,7 +63,7 @@ onMounted(() => {
         <div class="flex items-center gap-x-2 ml-auto">
           <button
             @click="deleteFriend(friend.player)"
-            class="danger-button"
+            class="danger-button-sm"
           >
             &#10005;
           </button>

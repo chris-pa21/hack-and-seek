@@ -21,3 +21,11 @@ html {
 .danger-button {
   @apply bg-[#DC0B00] text-[#E0E6F0] font-semibold rounded-lg cursor-pointer px-6 py-2 text-base transition-all duration-300 hover:scale-105 hover:bg-[#a00900] disabled:bg-[#7a0600] disabled:cursor-not-allowed disabled:scale-100;
 }
+
+.primary-button-sm {
+  @apply bg-[#00C853] text-[#E0E6F0] font-semibold rounded-lg cursor-pointer px-2 py-1 text-xs transition-all duration-300 hover:scale-105 hover:bg-[#009a40] disabled:bg-[#005724] disabled:cursor-not-allowed disabled:scale-100;
+}
+
+.danger-button-sm {
+  @apply bg-[#DC0B00] text-[#E0E6F0] font-semibold rounded-lg cursor-pointer px-2 py-1 text-xs transition-all duration-300 hover:scale-105 hover:bg-[#a00900] disabled:bg-[#7a0600] disabled:cursor-not-allowed disabled:scale-100;
+}

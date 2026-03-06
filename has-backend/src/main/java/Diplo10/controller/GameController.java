@@ -124,6 +124,32 @@ public class GameController {
         return ResponseEntity.ok(game);
     }
 
+    @PostMapping("/{gameId}/stop")
+    public ResponseEntity<Game> stopGame(@PathVariable Long gameId, Authentication authentication) {
+        Game game = this.gameRepository.findById(gameId)
+                .orElseThrow(() -> new NullPointerException("Game not found"));
+        String username = authentication.getName();
+        if (game.getCreated_by() == null || !game.getCreated_by().getPlayer().equals(username)) {
+            return ResponseEntity.status(403).build();
+        }
+        if (game.getStarted_at() == null || game.getFinished_at() != null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // Winner = non-defeated team with highest score, null if draw
+        List<Team> alive = game.getTeam_list().stream()
+                .filter(t -> !t.isDefeated())
+                .toList();
+        int maxScore = alive.stream().mapToInt(Team::getScore).max().orElse(0);
+        List<Team> topTeams = alive.stream()
+                .filter(t -> t.getScore() == maxScore)
+                .toList();
+        Team winner = topTeams.size() == 1 ? topTeams.get(0) : null;
+
+        gameService.endGame(game, winner);
+        return ResponseEntity.ok(game);
+    }
+
     @GetMapping("/{gameId}/teams")
     public ResponseEntity<List<Team>> showTeams(@PathVariable Long gameId) {
         List<Team> teams = this.teamRepository.findByGameId(Math.toIntExact(gameId));

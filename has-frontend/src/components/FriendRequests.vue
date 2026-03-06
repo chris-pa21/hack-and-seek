@@ -72,13 +72,13 @@ onMounted(() => {
         <div class="flex items-center gap-x-2 ml-auto">
           <button
             @click="acceptFriendRequest(request.username)"
-            class="primary-button"
+            class="primary-button-sm"
           >
             &check;
           </button>
           <button
             @click="refuseFriendRequest(request.username)"
-            class="danger-button"
+            class="danger-button-sm"
           >
             &#10005;
           </button>

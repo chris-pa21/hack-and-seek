@@ -42,6 +42,10 @@ export default {
         return axios.get(`/api/games/${gameId}/credentials`)
     },
 
+    stopGame(gameId) {
+        return axios.post(`/api/games/${gameId}/stop`)
+    },
+
     dismissGame(gameId) {
         return axios.post(`/api/games/${gameId}/dismiss`)
     },

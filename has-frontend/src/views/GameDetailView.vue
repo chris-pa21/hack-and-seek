@@ -171,6 +171,17 @@ const submitFlag = async () => {
   setTimeout(() => { flagMessage.value = '' }, 5000)
 }
 
+const stopGame = async () => {
+  if (!confirm('Are you sure you want to stop the game? This will end the game immediately.')) return
+  try {
+    await GameService.stopGame(gameId)
+    await fetchGame()
+    await fetchDefeatLog()
+  } catch (e) {
+    console.error('Failed to stop game:', e)
+  }
+}
+
 const dismissGame = async () => {
   try {
     await GameService.dismissGame(gameId)
@@ -258,12 +269,17 @@ onMounted(async () => {
             {{ isFinished ? 'Finished' : isStarted ? 'Running' : 'Pending' }}
           </span>
         </div>
+        <div class="flex items-center gap-3">
+        <button v-if="isCreator && isStarted && !isFinished" @click="stopGame" class="danger-button flex items-center gap-2">
+          Stop Game
+        </button>
         <button v-if="isStarted && !isFinished" @click="downloadConfig" class="primary-button flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m0 0l-4-4m4 4l4-4" />
           </svg>
           Download game{{ gameId }}.cfg
         </button>
+        </div>
       </div>
 
       <!-- ════════════════════════════════════════════════════════════════ -->
@@ -338,8 +354,11 @@ onMounted(async () => {
           <div class="px-6 py-8 text-center space-y-4">
             <div class="text-5xl">&#127942;</div>
             <h2 class="text-3xl font-bold text-[#FCD34D]">Game Over</h2>
-            <p class="text-lg text-[#E0E6F0]">
+            <p v-if="winnerTeam" class="text-lg text-[#E0E6F0]">
               <span class="font-bold text-[#00C853]">{{ displayTeamName(winnerTeam?.name) }}</span> wins!
+            </p>
+            <p v-else class="text-lg text-[#E0E6F0]">
+              It's a <span class="font-bold text-[#9333EA]">Draw</span>!
             </p>
             <button @click="dismissGame" class="danger-button mt-4">
               Dismiss from Dashboard

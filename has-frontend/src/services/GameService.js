@@ -37,4 +37,12 @@ export default {
     getDefeatLog(gameId) {
         return axios.get(`/api/games/${gameId}/defeat-log`)
     },
+
+    getCredentials(gameId) {
+        return axios.get(`/api/games/${gameId}/credentials`)
+    },
+
+    dismissGame(gameId) {
+        return axios.post(`/api/games/${gameId}/dismiss`)
+    },
 }

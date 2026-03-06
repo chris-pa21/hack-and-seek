@@ -19,6 +19,8 @@ const flagError = ref(false)
 const challenges = ref([])
 const containerMap = ref({})
 const defeatLog = ref([])
+const credentials = ref(null)
+const copiedPassword = ref(false)
 
 const difficultyColor = (name) => {
   const c = challenges.value.find(ch => ch.name === name)
@@ -49,6 +51,14 @@ const isStarted = computed(() => {
   return game.value?.started_at != null
 })
 
+const isFinished = computed(() => {
+  return game.value?.finished_at != null
+})
+
+const winnerTeam = computed(() => {
+  return game.value?.winnerTeam
+})
+
 const teams = computed(() => {
   return game.value?.team_list ?? []
 })
@@ -76,6 +86,23 @@ const fetchDefeatLog = async () => {
   }
 }
 
+const fetchCredentials = async () => {
+  try {
+    const res = await GameService.getCredentials(gameId)
+    credentials.value = res.data
+  } catch (e) {
+    console.error('Failed to fetch credentials:', e)
+  }
+}
+
+const copyPassword = () => {
+  if (credentials.value?.rootPassword) {
+    navigator.clipboard.writeText(credentials.value.rootPassword)
+    copiedPassword.value = true
+    setTimeout(() => { copiedPassword.value = false }, 2000)
+  }
+}
+
 const fetchContainers = async () => {
   try {
     const res = await GameService.getContainers(gameId)
@@ -98,6 +125,7 @@ const fetchGame = async () => {
     game.value = response.data
     if (response.data?.started_at) {
       await fetchContainers()
+      await fetchCredentials()
       await fetchDefeatLog()
     }
   } catch (error) {
@@ -114,6 +142,7 @@ const startGame = async () => {
     const response = await GameService.startGame(gameId)
     game.value = response.data
     await fetchContainers()
+    await fetchCredentials()
   } catch (error) {
     console.error('Failed to start game:', error)
   } finally {
@@ -140,6 +169,15 @@ const submitFlag = async () => {
     flagError.value = true
   }
   setTimeout(() => { flagMessage.value = '' }, 5000)
+}
+
+const dismissGame = async () => {
+  try {
+    await GameService.dismissGame(gameId)
+    router.push('/dashboard')
+  } catch (e) {
+    console.error('Failed to dismiss game:', e)
+  }
 }
 
 const downloadConfig = () => {
@@ -210,15 +248,17 @@ onMounted(async () => {
           <span
             :class="[
               'text-xs font-semibold px-2 py-1 rounded-md border',
-              isStarted
-                ? 'bg-[#00C853]/10 border-[#00C853]/30 text-[#00C853]'
-                : 'bg-[#FCD34D]/10 border-[#FCD34D]/30 text-[#FCD34D]'
+              isFinished
+                ? 'bg-[#9333EA]/10 border-[#9333EA]/30 text-[#9333EA]'
+                : isStarted
+                  ? 'bg-[#00C853]/10 border-[#00C853]/30 text-[#00C853]'
+                  : 'bg-[#FCD34D]/10 border-[#FCD34D]/30 text-[#FCD34D]'
             ]"
           >
-            {{ isStarted ? 'Running' : 'Pending' }}
+            {{ isFinished ? 'Finished' : isStarted ? 'Running' : 'Pending' }}
           </span>
         </div>
-        <button v-if="isStarted" @click="downloadConfig" class="primary-button flex items-center gap-2">
+        <button v-if="isStarted && !isFinished" @click="downloadConfig" class="primary-button flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m0 0l-4-4m4 4l4-4" />
           </svg>
@@ -293,8 +333,50 @@ onMounted(async () => {
       <!-- ════════════════════════════════════════════════════════════════ -->
       <template v-else>
 
+        <!-- ── Winner Banner (game finished) ───────────────────────────── -->
+        <div v-if="isFinished" class="bg-[#1F2937] rounded-2xl overflow-hidden border border-[#9333EA]/30">
+          <div class="px-6 py-8 text-center space-y-4">
+            <div class="text-5xl">&#127942;</div>
+            <h2 class="text-3xl font-bold text-[#FCD34D]">Game Over</h2>
+            <p class="text-lg text-[#E0E6F0]">
+              <span class="font-bold text-[#00C853]">{{ displayTeamName(winnerTeam?.name) }}</span> wins!
+            </p>
+            <button @click="dismissGame" class="danger-button mt-4">
+              Dismiss from Dashboard
+            </button>
+          </div>
+        </div>
+
+        <!-- ── Machine Credentials ────────────────────────────────────── -->
+        <div v-if="credentials && !isFinished" class="bg-[#1F2937] rounded-2xl overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-700">
+            <h2 class="text-2xl font-bold text-[#E0E6F0]">Your Machine Credentials</h2>
+          </div>
+          <div class="px-6 py-5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">IP Address</span>
+                <p class="mt-1 font-mono text-[#E0E6F0]">{{ credentials.ipAddress }}</p>
+              </div>
+              <div>
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Root Password</span>
+                <div class="mt-1 flex items-center gap-2">
+                  <code class="bg-[#0F172A] border border-gray-700 rounded-md px-3 py-1.5 font-mono text-[#00C853]">{{ credentials.rootPassword }}</code>
+                  <button
+                    @click="copyPassword"
+                    class="secondary-button text-xs px-3 py-1.5"
+                  >
+                    {{ copiedPassword ? 'Copied!' : 'Copy' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <p class="mt-3 text-xs text-gray-500">Use these credentials to SSH into your machine and defend it.</p>
+          </div>
+        </div>
+
         <!-- ── Flag Submission ──────────────────────────────────────────── -->
-        <div class="bg-[#1F2937] rounded-2xl overflow-hidden">
+        <div v-if="!isFinished" class="bg-[#1F2937] rounded-2xl overflow-hidden">
           <div class="px-6 py-4 border-b border-gray-700">
             <h2 class="text-2xl font-bold text-[#E0E6F0]">Submit Flag</h2>
           </div>

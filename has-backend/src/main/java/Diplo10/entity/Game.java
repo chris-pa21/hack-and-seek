@@ -32,6 +32,12 @@ public class Game {
 
     private LocalDateTime started_at;
 
+    private LocalDateTime finished_at;
+
+    @ManyToOne
+    @JoinColumn(name = "winner_team")
+    private Team winnerTeam;
+
     private int points;
 
     private String description;

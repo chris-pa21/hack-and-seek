@@ -67,7 +67,24 @@ public class ContainerService {
                 .exec().getId();
         dockerClient.execStartCmd(execId).exec(new ResultCallback.Adapter<Frame>());
 
-        return new SpawnResult(containerId, ipAddress, flag, points);
+        // Generate root password and set it in the container
+        String rootPassword = generateRootPassword();
+        String pwExecId = dockerClient.execCreateCmd(containerId)
+                .withCmd("sh", "-c", "echo 'root:" + rootPassword + "' | chpasswd")
+                .exec().getId();
+        dockerClient.execStartCmd(pwExecId).exec(new ResultCallback.Adapter<Frame>());
+
+        return new SpawnResult(containerId, ipAddress, flag, points, rootPassword);
+    }
+
+    private String generateRootPassword() {
+        SecureRandom random = new SecureRandom();
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder sb = new StringBuilder(8);
+        for (int i = 0; i < 8; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
     private String generateFlag() {

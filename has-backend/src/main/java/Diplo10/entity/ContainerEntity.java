@@ -1,5 +1,6 @@
 package Diplo10.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,6 +33,12 @@ public class ContainerEntity {
     private String image;
     private LocalDateTime createdAt;
     private String ipAddress;
+
+    @JsonIgnore
     private String flag;
+
     private Integer points;
+
+    @JsonIgnore
+    private String rootPassword;
 }

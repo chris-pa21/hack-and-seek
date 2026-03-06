@@ -36,6 +36,7 @@ public class OrchestrationService {
         String ipAddress = result.ipAddress();
         String flag = result.flag();
         int points = result.points();
+        String rootPassword = result.rootPassword();
 
         // Save to DB with proper relationships
         ContainerEntity entity = ContainerEntity.builder()
@@ -47,6 +48,7 @@ public class OrchestrationService {
                 .ipAddress(ipAddress)
                 .flag(flag)
                 .points(points)
+                .rootPassword(rootPassword)
                 .createdAt(LocalDateTime.now())
                 .build();
 

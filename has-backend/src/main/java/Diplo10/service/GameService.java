@@ -4,6 +4,7 @@ import Diplo10.entity.Game;
 import Diplo10.entity.Player;
 import Diplo10.entity.Team;
 import Diplo10.repository.GameRepository;
+import Diplo10.repository.PlayerRepository;
 import Diplo10.repository.TeamRepository;
 import Diplo10.service.orchestration.NetworkService;
 import Diplo10.service.orchestration.OrchestrationService;
@@ -18,6 +19,7 @@ public class GameService {
 
     private final GameRepository gameRepository;
     private final TeamRepository teamRepository;
+    private final PlayerRepository playerRepository;
     private final OrchestrationService orchestrationService;
     private final NetworkService networkService;
 
@@ -64,5 +66,49 @@ public class GameService {
         Team team = this.teamRepository.findByGameIdAndName(Math.toIntExact(gameId), teamId).get();
         team.deletePlayer(player);
         teamRepository.save(team);
+    }
+
+    public void endGame(Game game, Team winner) {
+        game.setFinished_at(LocalDateTime.now());
+        game.setWinnerTeam(winner);
+        gameRepository.save(game);
+
+        // Stop and remove all remaining containers + network
+        orchestrationService.terminateGame(game);
+    }
+
+    public boolean dismissGame(Long gameId, String username) {
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new NullPointerException("Game not found"));
+
+        // Find the player
+        Player player = playerRepository.findByPlayer(username)
+                .orElseThrow(() -> new NullPointerException("Player not found"));
+
+        // Remove player from their team in this game
+        for (Team team : game.getTeam_list()) {
+            if (team.getTeam_members().removeIf(m -> m.getPlayer().equals(username))) {
+                teamRepository.save(team);
+                break;
+            }
+        }
+
+        // Also remove creator reference if this user is the creator
+        if (game.getCreated_by() != null && game.getCreated_by().getPlayer().equals(username)) {
+            game.setCreated_by(null);
+            gameRepository.save(game);
+        }
+
+        // Check if any players remain across all teams
+        boolean anyPlayersLeft = game.getTeam_list().stream()
+                .anyMatch(t -> !t.getTeam_members().isEmpty());
+
+        if (!anyPlayersLeft) {
+            // No players left — delete the game and its teams
+            gameRepository.delete(game);
+            return true; // game deleted
+        }
+
+        return false; // game still exists
     }
 }

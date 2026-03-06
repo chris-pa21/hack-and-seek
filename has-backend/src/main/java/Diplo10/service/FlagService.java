@@ -29,11 +29,16 @@ public class FlagService {
     private final FlagSubmissionRepository flagSubmissionRepository;
     private final PlayerRepository playerRepository;
     private final DockerClient dockerClient;
+    private final GameService gameService;
 
     @Transactional
     public Map<String, Object> submitFlag(Long gameId, String username, String flagString) {
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new NullPointerException("Game not found"));
+
+        if (game.getFinished_at() != null) {
+            return Map.of("success", false, "message", "This game is already finished");
+        }
 
         // Find the submitter's team in this game
         Team attackingTeam = null;
@@ -117,12 +122,30 @@ public class FlagService {
             System.err.println("Failed to stop/remove container " + targetContainer.getContainerId() + ": " + e.getMessage());
         }
 
-        return Map.of(
-                "success", true,
-                "message", "Flag captured! +" + points + " points",
-                "points", points,
-                "defeatedTeam", targetTeam.getName()
-        );
+        // Check if only one team remains → game over
+        List<Team> remainingTeams = game.getTeam_list().stream()
+                .filter(t -> !t.isDefeated())
+                .toList();
+
+        boolean gameOver = remainingTeams.size() == 1;
+        String winnerName = null;
+
+        if (gameOver) {
+            Team winner = remainingTeams.get(0);
+            winnerName = winner.getName();
+            gameService.endGame(game, winner);
+        }
+
+        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        result.put("success", true);
+        result.put("message", gameOver
+                ? "Flag captured! +" + points + " points. Game over!"
+                : "Flag captured! +" + points + " points");
+        result.put("points", points);
+        result.put("defeatedTeam", targetTeam.getName());
+        result.put("gameOver", gameOver);
+        result.put("winnerTeam", winnerName);
+        return result;
     }
 
     public List<FlagSubmission> getDefeatLog(Long gameId) {

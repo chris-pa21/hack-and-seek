@@ -251,6 +251,9 @@ public class GameController {
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new NullPointerException("Game not found"));
 
+        Player player = playerRepository.findByPlayer(username)
+                .orElseThrow(() -> new NullPointerException("Player not found"));
+
         Team userTeam = game.getTeam_list().stream()
                 .filter(t -> t.getTeam_members().stream()
                         .anyMatch(m -> m.getPlayer().equals(username)))
@@ -261,8 +264,10 @@ public class GameController {
             return ResponseEntity.status(403).build();
         }
 
-        // For now, we take peer1. Config content could eventually be dynamic.
-        String config = vpnService.getVpnConfig(1);
+        // Ensure player has an IP and is registered on WireGuard
+        vpnService.ensureVpnConfig(player);
+
+        String config = vpnService.generateConfig(player);
         if (config == null || config.isBlank()) {
             return ResponseEntity.notFound().build();
         }

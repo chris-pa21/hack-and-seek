@@ -24,7 +24,11 @@ public class Player {
 
     private Integer points;
 
-    private String vpn_key;
+    private String vpnIp;
+
+    private String vpnPublicKey;
+    
+    private String vpnServerPublicKey;
 
     @ManyToMany
     @JoinTable(

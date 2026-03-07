@@ -77,15 +77,42 @@ def setup_vpn_bridge():
     if not vpn_subnet or not validate_subnet(vpn_subnet):
         return jsonify({"error": "Invalid or missing vpnSubnet"}), 400
     
-    # Allow traffic from VPN to anyone and anyone back to VPN
+    # We no longer add global ACCEPT rules here.
+    # Traffic is now strictly controlled per-player via add_player_to_game.
+    
+    return jsonify({"status": "active", "vpnSubnet": vpn_subnet}), 200
+
+@app.route('/api/game/player', methods=['POST'])
+def add_player_to_game():
+    data = request.get_json()
+    player_ip = data.get('playerIp')
+    subnet = data.get('subnet')
+    
+    if not player_ip or not subnet or not validate_subnet(subnet):
+        return jsonify({"error": "Invalid playerIp or subnet"}), 400
+        
+    # Allow specific player to reach game subnet and vice-versa
     success = True
-    success &= run_cmd(["iptables", "-A", "FORWARD", "-s", vpn_subnet, "-j", "ACCEPT"])
-    success &= run_cmd(["iptables", "-A", "FORWARD", "-d", vpn_subnet, "-j", "ACCEPT"])
+    success &= run_cmd(["iptables", "-A", "FORWARD", "-s", player_ip, "-d", subnet, "-j", "ACCEPT"])
+    success &= run_cmd(["iptables", "-A", "FORWARD", "-s", subnet, "-d", player_ip, "-j", "ACCEPT"])
     
     if success:
-        return jsonify({"status": "active", "vpnSubnet": vpn_subnet}), 200
+        return jsonify({"status": "active", "playerIp": player_ip, "subnet": subnet}), 200
+    return jsonify({"error": "Failed to apply player rules"}), 500
+
+@app.route('/api/game/player', methods=['DELETE'])
+def remove_player_from_game():
+    data = request.get_json()
+    player_ip = data.get('playerIp')
+    subnet = data.get('subnet')
     
-    return jsonify({"error": "Failed to apply bridge rules"}), 500
+    if not player_ip or not subnet or not validate_subnet(subnet):
+        return jsonify({"error": "Invalid playerIp or subnet"}), 400
+        
+    run_cmd(["iptables", "-D", "FORWARD", "-s", player_ip, "-d", subnet, "-j", "ACCEPT"])
+    run_cmd(["iptables", "-D", "FORWARD", "-s", subnet, "-d", player_ip, "-j", "ACCEPT"])
+    
+    return jsonify({"status": "deleted"}), 200
 
 if __name__ == '__main__':
     init_firewall()

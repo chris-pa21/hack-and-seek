@@ -73,12 +73,6 @@ const isDefeated = computed(() => {
   return myTeam.value?.defeated === true
 })
 
-const vpnFileName = computed(() => {
-  if (!game.value || !currentUsername.value) return 'vpn-config.conf'
-  const safePlayer = currentUsername.value.trim().toLowerCase().replace(/[^a-z0-9]/g, '_')
-  const safeGame = game.value.name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_')
-  return `${safePlayer}_${safeGame}.conf`
-})
 
 const sortedTeams = computed(() => {
   return [...teams.value].sort((a, b) => (b.score || 0) - (a.score || 0))
@@ -198,29 +192,6 @@ const dismissGame = async () => {
   }
 }
 
-const downloadConfig = async () => {
-  try {
-    const response = await GameService.getVpnConfig(gameId)
-    const contentDisposition = response.headers['content-disposition']
-    let fileName = `game${gameId}.conf`
-    if (contentDisposition) {
-      const fileNameMatch = contentDisposition.match(/filename="(.+)"/)
-      if (fileNameMatch) fileName = fileNameMatch[1]
-    }
-
-    const url = window.URL.createObjectURL(new Blob([response.data]))
-    const link = document.createElement('a')
-    link.href = url
-    link.setAttribute('download', fileName)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
-  } catch (error) {
-    console.error('Failed to download VPN config:', error)
-    alert('Failed to download VPN config. Is the game started?')
-  }
-}
 
 // ─── Helpers (for running view) ─────────────────────────────────────────────
 
@@ -290,15 +261,9 @@ onMounted(async () => {
           </span>
         </div>
         <div class="flex items-center gap-3">
-        <button v-if="isCreator && isStarted && !isFinished" @click="stopGame" class="danger-button flex items-center gap-2">
-          Stop Game
-        </button>
-        <button v-if="isStarted && !isFinished" @click="downloadConfig" class="primary-button flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m0 0l-4-4m4 4l4-4" />
-          </svg>
-          Download {{ vpnFileName }}
-        </button>
+          <button v-if="isCreator && isStarted && !isFinished" @click="stopGame" class="danger-button flex items-center gap-2">
+            Stop Game
+          </button>
         </div>
       </div>
 

@@ -9,8 +9,6 @@ import java.util.List;
 
 @Service
 public class NetworkService {
-    @Autowired
-    VpnService vpn;
     private final DockerClient dockerClient;
 
     public NetworkService(DockerClient dockerClient) {
@@ -33,15 +31,20 @@ public class NetworkService {
                 .exec().getId();
         }
 
-        // Attach VPN AFTER network exists
-        vpn.includeNetwork(networkId);
         return networkId;
     }
 
-    public void deleteIsolatedNetwork(String gameName) {
-        String networkName = "net_" + gameName;
+    public String getIsolatedNetworkId(String gameName) {
+        String networkName = "net_" + gameName.replaceAll("[^a-zA-Z0-9]", "_");
+        List<Network> networks = dockerClient.listNetworksCmd().withNameFilter(networkName).exec();
+        if (!networks.isEmpty()) {
+            return networks.get(0).getId();
+        }
+        return null;
+    }
 
-        vpn.excludeNetwork(networkName);
+    public void deleteIsolatedNetwork(String gameName) {
+        String networkName = "net_" + gameName.replaceAll("[^a-zA-Z0-9]", "_");
 
         List<Network> networks = dockerClient.listNetworksCmd().withNameFilter(networkName).exec();
 

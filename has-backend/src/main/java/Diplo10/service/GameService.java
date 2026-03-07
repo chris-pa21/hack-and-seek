@@ -8,6 +8,7 @@ import Diplo10.repository.PlayerRepository;
 import Diplo10.repository.TeamRepository;
 import Diplo10.service.orchestration.NetworkService;
 import Diplo10.service.orchestration.OrchestrationService;
+import Diplo10.service.vpn.VpnService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ public class GameService {
     private final PlayerRepository playerRepository;
     private final OrchestrationService orchestrationService;
     private final NetworkService networkService;
+    private final VpnService vpnService;
 
     public void addTeam(Team team, Long gameId) {
         Game game = this.gameRepository.findById(gameId).get();
@@ -56,10 +58,19 @@ public class GameService {
         for (Team team : game.getTeam_list()) {
             try {
                 orchestrationService.setupTeamContainer(game, team, networkId);
+                // Ensure all team members have a VPN config assigned
+                for (Player p : team.getTeam_members()) {
+                    vpnService.ensureVpnConfig(p);
+                }
             } catch (Exception e) {
                 System.err.println("Failed to start container for team " + team.getName() + ": " + e.getMessage());
             }
         }
+
+        // Attach WireGuard to the network
+        vpnService.includeNetwork(networkId);
+        // Add per-player firewall rules
+        vpnService.authorizeGameAccess(game, networkId);
 
         return game;
     }
@@ -77,6 +88,13 @@ public class GameService {
 
         // Stop and remove all remaining containers + network
         orchestrationService.terminateGame(game);
+
+        // Revoke access and detach from network
+        String networkId = networkService.getIsolatedNetworkId(game.getName());
+        if (networkId != null) {
+            vpnService.revokeGameAccess(game, networkId);
+            vpnService.excludeNetwork(networkId);
+        }
     }
 
     public boolean dismissGame(Long gameId, String username) {

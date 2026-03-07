@@ -15,19 +15,33 @@ import org.springframework.web.bind.annotation.RestController;
 public class PlayerController {
 
     private PlayerService playerService;
+    private Diplo10.service.vpn.VpnService vpnService;
 
     @Autowired
-    public PlayerController(PlayerService playerService) {
+    public PlayerController(PlayerService playerService, Diplo10.service.vpn.VpnService vpnService) {
         this.playerService = playerService;
+        this.vpnService = vpnService;
     }
-
-
-    public record GetPlayerResponse(String username, Integer points) {}
+    public record GetPlayerResponse(
+            String username, 
+            Integer points, 
+            String vpnIp, 
+            String vpnPublicKey, 
+            String vpnServerPublicKey,
+            String vpnServerEndpoint
+    ) {}
 
     @GetMapping
     public ResponseEntity<GetPlayerResponse> findByUsername(@RequestParam String username) {
         Player player = playerService.findByPlayer(username);
-        GetPlayerResponse response = new GetPlayerResponse(username, player.getPoints());
+        GetPlayerResponse response = new GetPlayerResponse(
+                username, 
+                player.getPoints(),
+                player.getVpnIp(),
+                player.getVpnPublicKey(),
+                player.getVpnServerPublicKey(),
+                vpnService.getServerEndpoint()
+        );
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -38,5 +52,10 @@ public class PlayerController {
         return new ResponseEntity<>(player.getPoints(), HttpStatus.OK);
     }
 
+    @org.springframework.web.bind.annotation.PostMapping("/vpn-public-key")
+    public ResponseEntity<Void> updateVpnPublicKey(@RequestParam String username, @RequestParam String publicKey) {
+        playerService.updateVpnPublicKey(username, publicKey);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }
 

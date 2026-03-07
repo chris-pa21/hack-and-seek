@@ -44,4 +44,22 @@ public class VpnManagerClient {
                 .retrieve()
                 .toBodilessEntity();
     }
+
+    public void addPlayerToGame(String playerIp, String subnet) {
+        restClient.post()
+                .uri(uriBuilder -> uriBuilder.path("/api/game/player").build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("playerIp", playerIp, "subnet", subnet))
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    public void removePlayerFromGame(String playerIp, String subnet) {
+        restClient.method(org.springframework.http.HttpMethod.DELETE)
+                .uri(uriBuilder -> uriBuilder.path("/api/game/player").build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("playerIp", playerIp, "subnet", subnet))
+                .retrieve()
+                .toBodilessEntity();
+    }
 }

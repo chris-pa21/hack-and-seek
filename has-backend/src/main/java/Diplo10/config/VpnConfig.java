@@ -19,7 +19,7 @@ public class VpnConfig {
 
     @PostConstruct
     public void init() {
-        System.out.println("Configuring VPN Bridge for subnet: " + vpnSubnet);
+        System.out.println("VPN Bridge initialized. Access will be managed per-game.");
         try {
             vpnManagerClient.setupVpnBridge(vpnSubnet);
         } catch (Exception e) {

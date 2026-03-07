@@ -268,8 +268,8 @@ public class GameController {
         }
 
         String safePlayerName = username.trim().toLowerCase().replaceAll("[^a-z0-9]", "_");
-        String safeTeamName = userTeam.getName().trim().toLowerCase().replaceAll("[^a-z0-9]", "_");
-        String fileName = safePlayerName + "_" + safeTeamName + "_wg.conf";
+        String safeGameName = game.getName().trim().toLowerCase().replaceAll("[^a-z0-9]", "_");
+        String fileName = safePlayerName + "_" + safeGameName + ".conf";
 
         return ResponseEntity.ok()
                 .header("Content-Disposition", "attachment; filename=\"" + fileName + "\"")

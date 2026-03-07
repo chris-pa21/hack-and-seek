@@ -73,6 +73,13 @@ const isDefeated = computed(() => {
   return myTeam.value?.defeated === true
 })
 
+const vpnFileName = computed(() => {
+  if (!game.value || !currentUsername.value) return 'vpn-config.conf'
+  const safePlayer = currentUsername.value.trim().toLowerCase().replace(/[^a-z0-9]/g, '_')
+  const safeGame = game.value.name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_')
+  return `${safePlayer}_${safeGame}.conf`
+})
+
 const sortedTeams = computed(() => {
   return [...teams.value].sort((a, b) => (b.score || 0) - (a.score || 0))
 })
@@ -290,7 +297,7 @@ onMounted(async () => {
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 4v12m0 0l-4-4m4 4l4-4" />
           </svg>
-          Download game{{ gameId }}.cfg
+          Download {{ vpnFileName }}
         </button>
         </div>
       </div>

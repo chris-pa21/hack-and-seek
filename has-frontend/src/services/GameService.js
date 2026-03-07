@@ -49,4 +49,8 @@ export default {
     dismissGame(gameId) {
         return axios.post(`/api/games/${gameId}/dismiss`)
     },
+
+    getVpnConfig(gameId) {
+        return axios.get(`/api/games/${gameId}/vpn-config`, { responseType: 'blob' })
+    },
 }

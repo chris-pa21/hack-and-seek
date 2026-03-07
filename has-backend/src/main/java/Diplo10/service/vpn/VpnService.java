@@ -88,4 +88,41 @@ public class VpnService {
     public void removePeer() {
 
     }
+
+    public String getVpnConfig(int peerNumber) {
+        final String containerId = "has-wireguard-server-1";
+        final String configPath = "/config/peer" + peerNumber + "/peer" + peerNumber + ".conf";
+
+        try {
+            String catResult = execInContainer(containerId, "cat", configPath);
+            return catResult;
+        } catch (Exception e) {
+            System.err.println("Error fetching VPN config: " + e.getMessage());
+            return null;
+        }
+    }
+
+    private String execInContainer(String containerId, String... command) {
+        try {
+            String execId = docker.execCreateCmd(containerId)
+                    .withCmd(command)
+                    .withAttachStdout(true)
+                    .withAttachStderr(true)
+                    .exec().getId();
+
+            java.io.ByteArrayOutputStream outputStream = new java.io.ByteArrayOutputStream();
+            docker.execStartCmd(execId).exec(new com.github.dockerjava.api.async.ResultCallback.Adapter<com.github.dockerjava.api.model.Frame>() {
+                @Override
+                public void onNext(com.github.dockerjava.api.model.Frame item) {
+                    try {
+                        outputStream.write(item.getPayload());
+                    } catch (java.io.IOException ignored) {}
+                }
+            }).awaitCompletion();
+            
+            return outputStream.toString();
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }

@@ -13,6 +13,7 @@ import Diplo10.repository.TeamRepository;
 import Diplo10.service.FlagService;
 import Diplo10.service.GameService;
 import Diplo10.service.orchestration.ImageService;
+import Diplo10.service.vpn.VpnService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -35,6 +36,7 @@ public class GameController {
     private final ImageService imageService;
     private final FlagService flagService;
     private final ContainerRepository containerRepository;
+    private final VpnService vpnService;
 
     @GetMapping("/challenges")
     public ResponseEntity<List<ChallengeDTO>> getChallenges() {
@@ -241,5 +243,36 @@ public class GameController {
                 "rootPassword", container.getRootPassword(),
                 "ipAddress", container.getIpAddress()
         ));
+    }
+
+    @GetMapping("/{gameId}/vpn-config")
+    public ResponseEntity<String> downloadVpnConfig(@PathVariable Long gameId, Authentication authentication) {
+        String username = authentication.getName();
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new NullPointerException("Game not found"));
+
+        Team userTeam = game.getTeam_list().stream()
+                .filter(t -> t.getTeam_members().stream()
+                        .anyMatch(m -> m.getPlayer().equals(username)))
+                .findFirst()
+                .orElse(null);
+
+        if (userTeam == null) {
+            return ResponseEntity.status(403).build();
+        }
+
+        // For now, we take peer1. Config content could eventually be dynamic.
+        String config = vpnService.getVpnConfig(1);
+        if (config == null || config.isBlank()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String safePlayerName = username.trim().toLowerCase().replaceAll("[^a-z0-9]", "_");
+        String safeTeamName = userTeam.getName().trim().toLowerCase().replaceAll("[^a-z0-9]", "_");
+        String fileName = safePlayerName + "_" + safeTeamName + "_wg.conf";
+
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"" + fileName + "\"")
+                .body(config);
     }
 }

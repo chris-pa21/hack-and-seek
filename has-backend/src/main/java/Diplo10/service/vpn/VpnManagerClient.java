@@ -35,4 +35,13 @@ public class VpnManagerClient {
                 .retrieve()
                 .toBodilessEntity();
     }
+
+    public void setupVpnBridge(String vpnSubnet) {
+        restClient.post()
+                .uri(uriBuilder -> uriBuilder.path("/api/vpn/bridge").build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("vpnSubnet", vpnSubnet))
+                .retrieve()
+                .toBodilessEntity();
+    }
 }

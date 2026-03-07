@@ -70,6 +70,23 @@ def get_game_networks():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/vpn/bridge', methods=['POST'])
+def setup_vpn_bridge():
+    data = request.get_json()
+    vpn_subnet = data.get('vpnSubnet')
+    if not vpn_subnet or not validate_subnet(vpn_subnet):
+        return jsonify({"error": "Invalid or missing vpnSubnet"}), 400
+    
+    # Allow traffic from VPN to anyone and anyone back to VPN
+    success = True
+    success &= run_cmd(["iptables", "-A", "FORWARD", "-s", vpn_subnet, "-j", "ACCEPT"])
+    success &= run_cmd(["iptables", "-A", "FORWARD", "-d", vpn_subnet, "-j", "ACCEPT"])
+    
+    if success:
+        return jsonify({"status": "active", "vpnSubnet": vpn_subnet}), 200
+    
+    return jsonify({"error": "Failed to apply bridge rules"}), 500
+
 if __name__ == '__main__':
     init_firewall()
     # Running on 9999 as per your previous setup

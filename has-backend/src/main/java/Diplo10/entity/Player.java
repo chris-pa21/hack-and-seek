@@ -26,8 +26,10 @@ public class Player {
 
     private String vpnIp;
 
+    private String vpnPrivateKey;
+
     private String vpnPublicKey;
-    
+
     private String vpnServerPublicKey;
 
     @ManyToMany

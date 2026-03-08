@@ -1,6 +1,8 @@
 # replace the [...] with appropriate values
 
 PASSWORD=[PASSWORD]
+VPN_SERVER_PUBLIC_KEY=
+VPN_SERVER_ENDPOINT=
 
 # default values, but feel free to change
 

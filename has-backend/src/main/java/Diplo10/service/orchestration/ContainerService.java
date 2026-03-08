@@ -38,8 +38,9 @@ public class ContainerService {
                 .withCpuQuota(50000L)            // 0.5 CPU Cores Limit
                 .withRestartPolicy(RestartPolicy.unlessStoppedRestart());
 
+        String safeName = teamName.replaceAll("[^a-zA-Z0-9_.-]", "_");
         String containerId = dockerClient.createContainerCmd(imageName)
-                .withName(teamName + "_" + System.currentTimeMillis())
+                .withName(safeName + "_" + System.currentTimeMillis())
                 .withHostConfig(hostConfig)
                 .withNetworkMode(networkId)
                 .withLabels(java.util.Map.of("owner", teamName, "type", "challenge"))

@@ -18,24 +18,6 @@ public class VpnManagerClient {
                 .build();
     }
 
-    public void addSubnet(String subnet) {
-        restClient.post()
-                .uri(uriBuilder -> uriBuilder.path("/api/game").build())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("subnet", subnet))
-                .retrieve()
-                .toBodilessEntity();
-    }
-
-    public void deleteSubnet(String subnet) {
-        restClient.method(org.springframework.http.HttpMethod.DELETE)
-                .uri(uriBuilder -> uriBuilder.path("/api/game").build())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("subnet", subnet))
-                .retrieve()
-                .toBodilessEntity();
-    }
-
     public void setupVpnBridge(String vpnSubnet) {
         restClient.post()
                 .uri(uriBuilder -> uriBuilder.path("/api/vpn/bridge").build())

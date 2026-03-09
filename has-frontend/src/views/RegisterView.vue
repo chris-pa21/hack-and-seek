@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { userAuthStore } from '@/stores/auth'
 
@@ -9,28 +9,16 @@ const authStore = userAuthStore() // ✅ Anderer Name!
 const username = ref('')
 const password = ref('')
 const confirmPassword = ref('')
-const email = ref('')
 const error = ref('')
 const loading = ref(false)
 const registered = ref(false)
-
-const isValidEmail = computed(() => {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return regex.test(email.value)
-})
 
 const register = async () => {
   error.value = ''
   loading.value = true
 
-  if (!username.value || !email.value || !password.value || !confirmPassword.value) {
+  if (!username.value || !password.value || !confirmPassword.value) {
     error.value = 'Please fill in all fields'
-    loading.value = false
-    return
-  }
-
-  if (!isValidEmail.value) {
-    error.value = 'email not valid'
     loading.value = false
     return
   }
@@ -44,7 +32,6 @@ const register = async () => {
   try {
     const response = await authStore.register({
       username: username.value,
-      email: email.value,
       password: password.value,
       confirmPassword: confirmPassword.value,
     })
@@ -98,18 +85,6 @@ const register = async () => {
           class="bg-[#fff] rounded-lg w-70 h-8 text-[#0A0F1E] text-center"
           @keyup.enter="register"
         />
-        <div>
-          <input
-            v-model="email"
-            placeholder="email"
-            type="email"
-            class="bg-[#fff] rounded-lg w-70 h-8 text-[#0A0F1E] text-center"
-            @keyup.enter="register"
-          />
-          <p v-if="!isValidEmail && email" class="text-[#DC0B00] flex justify-center">
-            email not valid
-          </p>
-        </div>
         <input
           v-model="password"
           placeholder="password"

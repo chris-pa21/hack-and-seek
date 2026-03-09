@@ -41,4 +41,8 @@ public class ContainerEntity {
 
     @JsonIgnore
     private String rootPassword;
+
+    private String flagPath;
+
+    private boolean disqualified;
 }

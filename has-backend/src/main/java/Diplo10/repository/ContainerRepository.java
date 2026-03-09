@@ -13,4 +13,5 @@ public interface ContainerRepository extends JpaRepository<ContainerEntity, Long
     List<ContainerEntity> findByGame(Game game);
     Optional<ContainerEntity> findByContainerId(String containerId);
     void deleteByContainerId(String containerId);
+    List<ContainerEntity> findByGameAndDisqualifiedFalse(Game game);
 }

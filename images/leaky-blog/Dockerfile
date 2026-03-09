@@ -40,6 +40,9 @@ COPY html/ /var/www/html/
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
+COPY healthcheck.sh /healthcheck.sh
+RUN chmod +x /healthcheck.sh
+
 EXPOSE 22 80
 
 ENTRYPOINT ["/entrypoint.sh"]

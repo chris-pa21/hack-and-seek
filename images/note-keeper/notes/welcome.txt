@@ -1,0 +1,8 @@
+Welcome to NoteKeeper!
+
+This is your personal knowledge base. Browse through the available notes using the sidebar.
+
+Features:
+- Quick access to all your notes
+- Simple and clean interface
+- Organized by topic

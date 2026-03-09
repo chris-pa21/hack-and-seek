@@ -23,7 +23,7 @@ const credentials = ref(null)
 const copiedPassword = ref(false)
 
 const difficultyColor = (name) => {
-  const c = challenges.value.find(ch => ch.name === name)
+  const c = challenges.value.find((ch) => ch.name === name)
   if (!c) return '#6B7280'
   if (c.difficulty <= 1) return '#00C853'
   if (c.difficulty === 2) return '#FCD34D'
@@ -31,7 +31,7 @@ const difficultyColor = (name) => {
 }
 
 const difficultyLabel = (name) => {
-  const c = challenges.value.find(ch => ch.name === name)
+  const c = challenges.value.find((ch) => ch.name === name)
   if (!c) return 'Unknown'
   if (c.difficulty <= 1) return 'Easy'
   if (c.difficulty === 2) return 'Medium'
@@ -64,15 +64,12 @@ const teams = computed(() => {
 })
 
 const myTeam = computed(() => {
-  return teams.value.find(t =>
-    t.team_members?.some(m => m.player === currentUsername.value)
-  )
+  return teams.value.find((t) => t.team_members?.some((m) => m.player === currentUsername.value))
 })
 
 const isDefeated = computed(() => {
   return myTeam.value?.defeated === true
 })
-
 
 const sortedTeams = computed(() => {
   return [...teams.value].sort((a, b) => (b.score || 0) - (a.score || 0))
@@ -100,7 +97,9 @@ const copyPassword = () => {
   if (credentials.value?.rootPassword) {
     navigator.clipboard.writeText(credentials.value.rootPassword)
     copiedPassword.value = true
-    setTimeout(() => { copiedPassword.value = false }, 2000)
+    setTimeout(() => {
+      copiedPassword.value = false
+    }, 2000)
   }
 }
 
@@ -169,11 +168,14 @@ const submitFlag = async () => {
     flagMessage.value = 'Failed to submit flag'
     flagError.value = true
   }
-  setTimeout(() => { flagMessage.value = '' }, 5000)
+  setTimeout(() => {
+    flagMessage.value = ''
+  }, 5000)
 }
 
 const stopGame = async () => {
-  if (!confirm('Are you sure you want to stop the game? This will end the game immediately.')) return
+  if (!confirm('Are you sure you want to stop the game? This will end the game immediately.'))
+    return
   try {
     await GameService.stopGame(gameId)
     await fetchGame()
@@ -191,7 +193,6 @@ const dismissGame = async () => {
     console.error('Failed to dismiss game:', e)
   }
 }
-
 
 // ─── Helpers (for running view) ─────────────────────────────────────────────
 
@@ -236,14 +237,10 @@ onMounted(async () => {
     </div>
 
     <div v-else class="max-w-4xl mx-auto px-4 py-8 space-y-8">
-
       <!-- ── Header (shared) ────────────────────────────────────────────── -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-4">
-          <button
-            @click="router.back()"
-            class="secondary-button flex items-center gap-2"
-          >
+          <button @click="router.back()" class="secondary-button flex items-center gap-2">
             ← Back
           </button>
           <h1 class="text-4xl font-bold text-[#E0E6F0]">{{ game.name }}</h1>
@@ -254,14 +251,18 @@ onMounted(async () => {
                 ? 'bg-[#9333EA]/10 border-[#9333EA]/30 text-[#9333EA]'
                 : isStarted
                   ? 'bg-[#00C853]/10 border-[#00C853]/30 text-[#00C853]'
-                  : 'bg-[#FCD34D]/10 border-[#FCD34D]/30 text-[#FCD34D]'
+                  : 'bg-[#FCD34D]/10 border-[#FCD34D]/30 text-[#FCD34D]',
             ]"
           >
             {{ isFinished ? 'Finished' : isStarted ? 'Running' : 'Pending' }}
           </span>
         </div>
         <div class="flex items-center gap-3">
-          <button v-if="isCreator && isStarted && !isFinished" @click="stopGame" class="danger-button flex items-center gap-2">
+          <button
+            v-if="isCreator && isStarted && !isFinished"
+            @click="stopGame"
+            class="danger-button flex items-center gap-2"
+          >
             Stop Game
           </button>
         </div>
@@ -271,7 +272,6 @@ onMounted(async () => {
       <!-- ── LOBBY VIEW (game not started) ─────────────────────────────── -->
       <!-- ════════════════════════════════════════════════════════════════ -->
       <template v-if="!isStarted">
-
         <!-- Teams Overview -->
         <div class="bg-[#1F2937] rounded-2xl overflow-hidden">
           <div class="px-6 py-4 border-b border-gray-700">
@@ -283,16 +283,18 @@ onMounted(async () => {
           </div>
 
           <div v-else class="divide-y divide-gray-800">
-            <div
-              v-for="team in teams"
-              :key="team.name"
-              class="px-6 py-5 space-y-3"
-            >
+            <div v-for="team in teams" :key="team.name" class="px-6 py-5 space-y-3">
               <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-[#E0E6F0]">{{ displayTeamName(team.name) }}</h3>
+                <h3 class="text-lg font-semibold text-[#E0E6F0]">
+                  {{ displayTeamName(team.name) }}
+                </h3>
                 <span
                   class="text-xs font-semibold px-2 py-1 rounded-md border"
-                  :style="{ color: difficultyColor(team.challenge), borderColor: difficultyColor(team.challenge) + '4D', backgroundColor: difficultyColor(team.challenge) + '1A' }"
+                  :style="{
+                    color: difficultyColor(team.challenge),
+                    borderColor: difficultyColor(team.challenge) + '4D',
+                    backgroundColor: difficultyColor(team.challenge) + '1A',
+                  }"
                 >
                   {{ team.challenge }} · {{ difficultyLabel(team.challenge) }}
                 </span>
@@ -305,7 +307,10 @@ onMounted(async () => {
                 >
                   {{ member.player }}
                 </span>
-                <span v-if="!team.team_members || team.team_members.length === 0" class="text-xs text-gray-600 italic">
+                <span
+                  v-if="!team.team_members || team.team_members.length === 0"
+                  class="text-xs text-gray-600 italic"
+                >
                   No players
                 </span>
               </div>
@@ -326,28 +331,28 @@ onMounted(async () => {
         <div v-else class="text-center text-gray-500 text-sm pt-4">
           Waiting for the game creator to start the game...
         </div>
-
       </template>
 
       <!-- ════════════════════════════════════════════════════════════════ -->
       <!-- ── RUNNING VIEW (game started) ──────────────────────────────── -->
       <!-- ════════════════════════════════════════════════════════════════ -->
       <template v-else>
-
         <!-- ── Winner Banner (game finished) ───────────────────────────── -->
-        <div v-if="isFinished" class="bg-[#1F2937] rounded-2xl overflow-hidden border border-[#9333EA]/30">
+        <div
+          v-if="isFinished"
+          class="bg-[#1F2937] rounded-2xl overflow-hidden border border-[#9333EA]/30"
+        >
           <div class="px-6 py-8 text-center space-y-4">
             <div class="text-5xl">&#127942;</div>
             <h2 class="text-3xl font-bold text-[#FCD34D]">Game Over</h2>
             <p v-if="winnerTeam" class="text-lg text-[#E0E6F0]">
-              <span class="font-bold text-[#00C853]">{{ displayTeamName(winnerTeam?.name) }}</span> wins!
+              <span class="font-bold text-[#00C853]">{{ displayTeamName(winnerTeam?.name) }}</span>
+              wins!
             </p>
             <p v-else class="text-lg text-[#E0E6F0]">
               It's a <span class="font-bold text-[#9333EA]">Draw</span>!
             </p>
-            <button @click="dismissGame" class="danger-button mt-4">
-              Dismiss from Dashboard
-            </button>
+            <button @click="dismissGame" class="danger-button mt-4">Dismiss from Dashboard</button>
           </div>
         </div>
 
@@ -359,23 +364,29 @@ onMounted(async () => {
           <div class="px-6 py-5">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">IP Address</span>
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                  >IP Address</span
+                >
                 <p class="mt-1 font-mono text-[#E0E6F0]">{{ credentials.ipAddress }}</p>
               </div>
               <div>
-                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Root Password</span>
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                  >Root Password</span
+                >
                 <div class="mt-1 flex items-center gap-2">
-                  <code class="bg-[#0F172A] border border-gray-700 rounded-md px-3 py-1.5 font-mono text-[#00C853]">{{ credentials.rootPassword }}</code>
-                  <button
-                    @click="copyPassword"
-                    class="secondary-button text-xs px-3 py-1.5"
+                  <code
+                    class="bg-[#0F172A] border border-gray-700 rounded-md px-3 py-1.5 font-mono text-[#00C853]"
+                    >{{ credentials.rootPassword }}</code
                   >
+                  <button @click="copyPassword" class="secondary-button text-xs px-3 py-1.5">
                     {{ copiedPassword ? 'Copied!' : 'Copy' }}
                   </button>
                 </div>
               </div>
             </div>
-            <p class="mt-3 text-xs text-gray-500">Use these credentials to SSH into your machine and defend it.</p>
+            <p class="mt-3 text-xs text-gray-500">
+              Use these credentials to SSH as root into your machine and defend it.
+            </p>
           </div>
         </div>
 
@@ -399,7 +410,13 @@ onMounted(async () => {
                 />
                 <button @click="submitFlag" class="primary-button px-6">Submit</button>
               </div>
-              <p v-if="flagMessage" class="mt-3 text-sm" :class="flagError ? 'text-[#DC0B00]' : 'text-[#00C853]'">{{ flagMessage }}</p>
+              <p
+                v-if="flagMessage"
+                class="mt-3 text-sm"
+                :class="flagError ? 'text-[#DC0B00]' : 'text-[#00C853]'"
+              >
+                {{ flagMessage }}
+              </p>
             </template>
           </div>
         </div>
@@ -409,14 +426,22 @@ onMounted(async () => {
           <div class="px-6 py-4 border-b border-gray-700 flex items-center justify-between">
             <h2 class="text-2xl font-bold text-[#E0E6F0]">Leaderboard</h2>
             <div class="flex items-center gap-4 text-xs text-gray-500">
-              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#00C853] inline-block"></span> Secured</span>
-              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#DC0B00] inline-block"></span> Defeated</span>
-              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-gray-500 inline-block"></span> Active</span>
+              <span class="flex items-center gap-1"
+                ><span class="w-2 h-2 rounded-full bg-[#00C853] inline-block"></span> Secured</span
+              >
+              <span class="flex items-center gap-1"
+                ><span class="w-2 h-2 rounded-full bg-[#DC0B00] inline-block"></span> Defeated</span
+              >
+              <span class="flex items-center gap-1"
+                ><span class="w-2 h-2 rounded-full bg-gray-500 inline-block"></span> Active</span
+              >
             </div>
           </div>
 
           <!-- Table Header -->
-          <div class="grid grid-cols-12 px-6 py-3 bg-[#0F172A] text-xs font-semibold text-gray-500 uppercase tracking-wider">
+          <div
+            class="grid grid-cols-12 px-6 py-3 bg-[#0F172A] text-xs font-semibold text-gray-500 uppercase tracking-wider"
+          >
             <span class="col-span-1">#</span>
             <span class="col-span-3">Team</span>
             <span class="col-span-3">IP Address</span>
@@ -431,19 +456,45 @@ onMounted(async () => {
             class="grid grid-cols-12 items-center px-6 py-4 border-b border-gray-800 transition-colors"
             :class="[
               idx % 2 === 0 ? 'bg-[#0F172A]/40' : '',
-              team.defeated ? 'border-l-4 border-l-[#DC0B00] opacity-60' : 'border-l-4 border-l-transparent'
+              team.defeated
+                ? 'border-l-4 border-l-[#DC0B00] opacity-60'
+                : 'border-l-4 border-l-transparent',
             ]"
           >
-            <span :class="['col-span-1 font-bold text-lg', idx === 0 && !team.defeated ? 'text-[#FCD34D]' : 'text-gray-500']">
+            <span
+              :class="[
+                'col-span-1 font-bold text-lg',
+                idx === 0 && !team.defeated ? 'text-[#FCD34D]' : 'text-gray-500',
+              ]"
+            >
               {{ idx + 1 }}
             </span>
             <span class="col-span-3 font-semibold text-[#E0E6F0] flex items-center gap-2">
               {{ displayTeamName(team.name) }}
-              <span v-if="team.defeated" class="text-xs px-2 py-0.5 rounded-md bg-[#DC0B00]/10 border border-[#DC0B00]/30 text-[#DC0B00]">Defeated</span>
+              <span
+                v-if="team.defeated"
+                class="text-xs px-2 py-0.5 rounded-md bg-[#DC0B00]/10 border border-[#DC0B00]/30 text-[#DC0B00]"
+                >Defeated</span
+              >
             </span>
-            <span :class="['col-span-3 font-mono text-sm', team.name === myTeam?.name ? 'text-[#E0E6F0]' : 'text-gray-400']">{{ containerMap[team.name] || '—' }}</span>
-            <span class="col-span-2 text-sm font-semibold" :style="{ color: difficultyColor(team.challenge) }">{{ team.challenge }}</span>
-            <span :class="['col-span-3 text-right font-bold text-base', idx === 0 && !team.defeated ? 'text-[#FCD34D]' : 'text-[#E0E6F0]']">
+            <span
+              :class="[
+                'col-span-3 font-mono text-sm',
+                team.name === myTeam?.name ? 'text-[#E0E6F0]' : 'text-gray-400',
+              ]"
+              >{{ containerMap[team.name] || '—' }}</span
+            >
+            <span
+              class="col-span-2 text-sm font-semibold"
+              :style="{ color: difficultyColor(team.challenge) }"
+              >{{ team.challenge }}</span
+            >
+            <span
+              :class="[
+                'col-span-3 text-right font-bold text-base',
+                idx === 0 && !team.defeated ? 'text-[#FCD34D]' : 'text-[#E0E6F0]',
+              ]"
+            >
               {{ team.score || 0 }} pts
             </span>
           </div>
@@ -468,18 +519,23 @@ onMounted(async () => {
               class="px-6 py-4 flex items-center justify-between"
             >
               <div class="text-sm text-[#E0E6F0]">
-                <span class="text-[#00C853] font-semibold">{{ displayTeamName(entry.attackingTeam) }}</span>
+                <span class="text-[#00C853] font-semibold">{{
+                  displayTeamName(entry.attackingTeam)
+                }}</span>
                 <span class="text-gray-500"> captured </span>
-                <span class="text-[#DC0B00] font-semibold">{{ displayTeamName(entry.defeatedTeam) }}</span>
+                <span class="text-[#DC0B00] font-semibold">{{
+                  displayTeamName(entry.defeatedTeam)
+                }}</span>
               </div>
               <div class="flex items-center gap-3">
                 <span class="text-[#FCD34D] font-bold text-sm">+{{ entry.pointsAwarded }} pts</span>
-                <span class="text-xs text-gray-600">{{ new Date(entry.submittedAt).toLocaleTimeString() }}</span>
+                <span class="text-xs text-gray-600">{{
+                  new Date(entry.submittedAt).toLocaleTimeString()
+                }}</span>
               </div>
             </div>
           </div>
         </div>
-
       </template>
     </div>
   </div>

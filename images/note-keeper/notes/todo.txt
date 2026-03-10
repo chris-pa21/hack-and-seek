@@ -1,0 +1,7 @@
+TODO List
+
+[x] Set up web server
+[x] Create notes directory
+[ ] Add authentication
+[ ] Fix file path validation
+[ ] Restrict access to system files

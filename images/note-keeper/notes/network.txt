@@ -1,0 +1,13 @@
+Network Basics
+
+Common ports:
+- 22: SSH
+- 80: HTTP
+- 443: HTTPS
+- 3306: MySQL
+- 5432: PostgreSQL
+
+Useful commands:
+- ip a: Show network interfaces
+- ss -tulnp: Show listening ports
+- ping: Test connectivity

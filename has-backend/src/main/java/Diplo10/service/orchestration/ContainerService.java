@@ -25,14 +25,22 @@ public class ContainerService {
                 ? imageLabels.get("flag_path")
                 : "/home/flag.txt";
 
+        int points = 100; // default
+        if (imageLabels != null && imageLabels.containsKey("points")) {
+            try {
+                points = Integer.parseInt(imageLabels.get("points"));
+            } catch (NumberFormatException ignored) {}
+        }
+
         HostConfig hostConfig = HostConfig.newHostConfig()
                 .withNetworkMode(networkId)
                 .withMemory(128 * 1024 * 1024L) // 128MB RAM Limit (Sicherheit/Skalierbarkeit)
                 .withCpuQuota(50000L)            // 0.5 CPU Cores Limit
                 .withRestartPolicy(RestartPolicy.unlessStoppedRestart());
 
+        String safeName = teamName.replaceAll("[^a-zA-Z0-9_.-]", "_");
         String containerId = dockerClient.createContainerCmd(imageName)
-                .withName(teamName + "_" + System.currentTimeMillis())
+                .withName(safeName + "_" + System.currentTimeMillis())
                 .withHostConfig(hostConfig)
                 .withNetworkMode(networkId)
                 .withLabels(java.util.Map.of("owner", teamName, "type", "challenge"))
@@ -60,7 +68,24 @@ public class ContainerService {
                 .exec().getId();
         dockerClient.execStartCmd(execId).exec(new ResultCallback.Adapter<Frame>());
 
-        return new SpawnResult(containerId, ipAddress, flag);
+        // Generate root password and set it in the container
+        String rootPassword = generateRootPassword();
+        String pwExecId = dockerClient.execCreateCmd(containerId)
+                .withCmd("sh", "-c", "echo 'root:" + rootPassword + "' | chpasswd")
+                .exec().getId();
+        dockerClient.execStartCmd(pwExecId).exec(new ResultCallback.Adapter<Frame>());
+
+        return new SpawnResult(containerId, ipAddress, flag, points, rootPassword, flagPath);
+    }
+
+    private String generateRootPassword() {
+        SecureRandom random = new SecureRandom();
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder sb = new StringBuilder(8);
+        for (int i = 0; i < 8; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
     private String generateFlag() {

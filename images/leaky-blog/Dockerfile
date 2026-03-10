@@ -5,6 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 LABEL type="challenge"
 LABEL difficulty="1"
 LABEL flag_path="/home/jdoe/flag.txt"
+LABEL points="100"
 
 RUN apt-get update && apt-get install -y \
     openssh-server \
@@ -38,6 +39,9 @@ COPY html/ /var/www/html/
 # Entrypoint
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+COPY healthcheck.sh /healthcheck.sh
+RUN chmod +x /healthcheck.sh
 
 EXPOSE 22 80
 

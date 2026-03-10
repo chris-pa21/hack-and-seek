@@ -1,0 +1,47 @@
+package Diplo10.service.vpn;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+
+import java.util.Map;
+
+@Service
+public class VpnManagerClient {
+
+    private final RestClient restClient;
+
+    public VpnManagerClient(@Value("${vpn.manager.url:http://wireguard-server:9999}") String baseUrl) {
+        this.restClient = RestClient.builder()
+                .baseUrl(baseUrl)
+                .build();
+    }
+
+    public void setupVpnBridge(String vpnSubnet) {
+        restClient.post()
+                .uri(uriBuilder -> uriBuilder.path("/api/vpn/bridge").build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("vpnSubnet", vpnSubnet))
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    public void addPlayerToGame(String playerIp, String subnet) {
+        restClient.post()
+                .uri(uriBuilder -> uriBuilder.path("/api/game/player").build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("playerIp", playerIp, "subnet", subnet))
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    public void removePlayerFromGame(String playerIp, String subnet) {
+        restClient.method(org.springframework.http.HttpMethod.DELETE)
+                .uri(uriBuilder -> uriBuilder.path("/api/game/player").build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("playerIp", playerIp, "subnet", subnet))
+                .retrieve()
+                .toBodilessEntity();
+    }
+}

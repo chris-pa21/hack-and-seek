@@ -91,19 +91,27 @@ const handleCreateGame = async (gameData) => {
             <span
               :class="[
                 'text-[10px] font-semibold px-1.5 py-0.5 rounded border shrink-0',
-                game.started_at
-                  ? 'bg-[#00C853]/10 border-[#00C853]/30 text-[#00C853]'
-                  : 'bg-[#FCD34D]/10 border-[#FCD34D]/30 text-[#FCD34D]'
+                game.finished_at
+                  ? 'bg-[#9333EA]/10 border-[#9333EA]/30 text-[#9333EA]'
+                  : game.started_at
+                    ? 'bg-[#00C853]/10 border-[#00C853]/30 text-[#00C853]'
+                    : 'bg-[#FCD34D]/10 border-[#FCD34D]/30 text-[#FCD34D]'
               ]"
             >
-              {{ game.started_at ? 'Running' : 'Pending' }}
+              {{ game.finished_at ? 'Finished' : game.started_at ? 'Running' : 'Pending' }}
             </span>
           </div>
           <span class="text-xs text-gray-500 ml-2 shrink-0">
             {{ game.team_list?.length ?? 0 }} team{{ (game.team_list?.length ?? 0) !== 1 ? 's' : '' }}
           </span>
         </div>
-        <div class="flex flex-wrap gap-1 mt-1">
+        <div v-if="game.finished_at && game.winnerTeam" class="mt-1 text-xs text-[#FCD34D] font-semibold">
+          &#127942; Winner: {{ game.winnerTeam.name.split('_game')[0] }}
+        </div>
+        <div v-else-if="game.finished_at && !game.winnerTeam" class="mt-1 text-xs text-[#9333EA] font-semibold">
+          &#127942; Draw
+        </div>
+        <div v-else class="flex flex-wrap gap-1 mt-1">
           <span
             v-for="team in game.team_list"
             :key="team.name"

@@ -25,8 +25,8 @@ export const userAuthStore = defineStore('auth', {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
         })
-        this.user = response.data
         this.isAuthenticated = true
+        await this.checkAuth()
         return response
       } catch (error) {
         this.isAuthenticated = false
@@ -42,8 +42,8 @@ export const userAuthStore = defineStore('auth', {
         const response = await axios.post('/api/auth/register', userData, {
           withCredentials: true,
         })
-        this.user = response.data
         this.isAuthenticated = true
+        await this.checkAuth()
         return response
       } catch (error) {
         this.handleAuthError(error)
@@ -81,5 +81,11 @@ export const userAuthStore = defineStore('auth', {
         this.isAuthenticated = false
       }
     },
+
+    handleAuthError(error) {
+      console.error('Auth error:', error)
+      this.user = null
+      this.isAuthenticated = false
+    }
   },
 })

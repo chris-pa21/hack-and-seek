@@ -20,11 +20,15 @@ public class Player {
 
     private String password;
 
-    private String email;
-
     private Integer points;
 
-    private String vpn_key;
+    private String vpnIp;
+
+    private String vpnPrivateKey;
+
+    private String vpnPublicKey;
+
+    private String vpnServerPublicKey;
 
     @ManyToMany
     @JoinTable(
@@ -36,10 +40,9 @@ public class Player {
     @JsonIgnore
     private Set<Player> friends = new HashSet<>();
 
-    public Player(String name, String password, String email) {
+    public Player(String name, String password) {
         this.player = name;
         this.password = password;
-        this.email = email;
         this.points = 0;
     }
 }

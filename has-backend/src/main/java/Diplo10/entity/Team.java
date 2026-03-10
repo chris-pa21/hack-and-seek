@@ -25,6 +25,12 @@ public class Team {
 
     private String challenge;
 
+    private int score;
+
+    private boolean defeated;
+
+    private boolean disqualified;
+
     @ManyToMany
     private List<Player> team_members;
 

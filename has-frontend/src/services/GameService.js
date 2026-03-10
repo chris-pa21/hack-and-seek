@@ -29,4 +29,28 @@ export default {
     getContainers(gameId) {
         return axios.get(`/api/orchestration/session/game/${gameId}`)
     },
+
+    submitFlag(gameId, flag) {
+        return axios.post(`/api/games/${gameId}/submit-flag`, { flag })
+    },
+
+    getDefeatLog(gameId) {
+        return axios.get(`/api/games/${gameId}/defeat-log`)
+    },
+
+    getCredentials(gameId) {
+        return axios.get(`/api/games/${gameId}/credentials`)
+    },
+
+    stopGame(gameId) {
+        return axios.post(`/api/games/${gameId}/stop`)
+    },
+
+    dismissGame(gameId) {
+        return axios.post(`/api/games/${gameId}/dismiss`)
+    },
+
+    getVpnConfig(gameId) {
+        return axios.get(`/api/games/${gameId}/vpn-config`, { responseType: 'blob' })
+    },
 }

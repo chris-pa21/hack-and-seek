@@ -1,12 +1,16 @@
 package Diplo10.controller;
 
 import Diplo10.dto.ChallengeDTO;
+import Diplo10.entity.ContainerEntity;
+import Diplo10.entity.FlagSubmission;
 import Diplo10.entity.Game;
 import Diplo10.entity.Player;
 import Diplo10.entity.Team;
+import Diplo10.repository.ContainerRepository;
 import Diplo10.repository.GameRepository;
 import Diplo10.repository.PlayerRepository;
 import Diplo10.repository.TeamRepository;
+import Diplo10.service.FlagService;
 import Diplo10.service.GameService;
 import Diplo10.service.orchestration.ImageService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/games")
@@ -28,6 +33,8 @@ public class GameController {
     private final TeamRepository teamRepository;
     private final PlayerRepository playerRepository;
     private final ImageService imageService;
+    private final FlagService flagService;
+    private final ContainerRepository containerRepository;
 
     @GetMapping("/challenges")
     public ResponseEntity<List<ChallengeDTO>> getChallenges() {
@@ -117,6 +124,32 @@ public class GameController {
         return ResponseEntity.ok(game);
     }
 
+    @PostMapping("/{gameId}/stop")
+    public ResponseEntity<Game> stopGame(@PathVariable Long gameId, Authentication authentication) {
+        Game game = this.gameRepository.findById(gameId)
+                .orElseThrow(() -> new NullPointerException("Game not found"));
+        String username = authentication.getName();
+        if (game.getCreated_by() == null || !game.getCreated_by().getPlayer().equals(username)) {
+            return ResponseEntity.status(403).build();
+        }
+        if (game.getStarted_at() == null || game.getFinished_at() != null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // Winner = non-defeated team with highest score, null if draw
+        List<Team> alive = game.getTeam_list().stream()
+                .filter(t -> !t.isDefeated())
+                .toList();
+        int maxScore = alive.stream().mapToInt(Team::getScore).max().orElse(0);
+        List<Team> topTeams = alive.stream()
+                .filter(t -> t.getScore() == maxScore)
+                .toList();
+        Team winner = topTeams.size() == 1 ? topTeams.get(0) : null;
+
+        gameService.endGame(game, winner);
+        return ResponseEntity.ok(game);
+    }
+
     @GetMapping("/{gameId}/teams")
     public ResponseEntity<List<Team>> showTeams(@PathVariable Long gameId) {
         List<Team> teams = this.teamRepository.findByGameId(Math.toIntExact(gameId));
@@ -148,4 +181,66 @@ public class GameController {
         this.gameService.deleteTeam(teamId, gameId);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/{gameId}/submit-flag")
+    public ResponseEntity<Map<String, Object>> submitFlag(
+            @PathVariable Long gameId,
+            @RequestBody Map<String, String> body,
+            Authentication authentication) {
+        String flag = body.get("flag");
+        if (flag == null || flag.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Flag is required"));
+        }
+        String username = authentication.getName();
+        Map<String, Object> result = flagService.submitFlag(gameId, username, flag.trim());
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{gameId}/defeat-log")
+    public ResponseEntity<List<FlagSubmission>> getDefeatLog(@PathVariable Long gameId) {
+        return ResponseEntity.ok(flagService.getDefeatLog(gameId));
+    }
+
+    @PostMapping("/{gameId}/dismiss")
+    public ResponseEntity<Map<String, Object>> dismissGame(@PathVariable Long gameId, Authentication authentication) {
+        String username = authentication.getName();
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new NullPointerException("Game not found"));
+
+        if (game.getFinished_at() == null) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Game is not finished yet"));
+        }
+
+        boolean deleted = gameService.dismissGame(gameId, username);
+        return ResponseEntity.ok(Map.of("success", true, "gameDeleted", deleted));
+    }
+
+    @GetMapping("/{gameId}/credentials")
+    public ResponseEntity<Map<String, String>> getCredentials(@PathVariable Long gameId, Authentication authentication) {
+        String username = authentication.getName();
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new NullPointerException("Game not found"));
+
+        // Find the team the authenticated user belongs to
+        Team userTeam = game.getTeam_list().stream()
+                .filter(t -> t.getTeam_members().stream()
+                        .anyMatch(m -> m.getPlayer().equals(username)))
+                .findFirst()
+                .orElse(null);
+
+        if (userTeam == null) {
+            return ResponseEntity.status(403).build();
+        }
+
+        ContainerEntity container = containerRepository.findByTeam(userTeam).orElse(null);
+        if (container == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "rootPassword", container.getRootPassword(),
+                "ipAddress", container.getIpAddress()
+        ));
+    }
+
 }

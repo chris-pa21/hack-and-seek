@@ -9,8 +9,6 @@ import java.util.List;
 
 @Service
 public class NetworkService {
-    @Autowired
-    VpnService vpn;
     private final DockerClient dockerClient;
 
     public NetworkService(DockerClient dockerClient) {
@@ -18,27 +16,35 @@ public class NetworkService {
     }
 
     public String createIsolatedNetwork(String gameName) {
-        String networkName = "net_" + gameName;
-        vpn.includeNetwork(networkName);
-
-        // Prüfen, ob Netzwerk bereits existiert (Reproduzierbarkeit)
+        String networkName = "net_" + gameName.replaceAll("[^a-zA-Z0-9]", "_");
+        
+        // Check if network already exists
         List<Network> networks = dockerClient.listNetworksCmd().withNameFilter(networkName).exec();
+        String networkId;
         if (!networks.isEmpty()) {
-            String existingId = networks.get(0).getId();
-            vpn.includeNetwork(networkName);
-            return existingId;
-        }
-        return dockerClient.createNetworkCmd()
+            networkId = networks.get(0).getId();
+        } else {
+            networkId = dockerClient.createNetworkCmd()
                 .withName(networkName)
                 .withCheckDuplicate(true)
-                .withInternal(false) // Erlaubt Internet für Updates, falls nötig
+                .withInternal(false)
                 .exec().getId();
+        }
+
+        return networkId;
+    }
+
+    public String getIsolatedNetworkId(String gameName) {
+        String networkName = "net_" + gameName.replaceAll("[^a-zA-Z0-9]", "_");
+        List<Network> networks = dockerClient.listNetworksCmd().withNameFilter(networkName).exec();
+        if (!networks.isEmpty()) {
+            return networks.get(0).getId();
+        }
+        return null;
     }
 
     public void deleteIsolatedNetwork(String gameName) {
-        String networkName = "net_" + gameName;
-
-        vpn.excludeNetwork(networkName);
+        String networkName = "net_" + gameName.replaceAll("[^a-zA-Z0-9]", "_");
 
         List<Network> networks = dockerClient.listNetworksCmd().withNameFilter(networkName).exec();
 

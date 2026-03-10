@@ -83,7 +83,7 @@ onMounted(() => {
       <h2 class="font-bold text-3xl text-[#E0E6F0] flex items-center gap-3">
         <span class="text-blue-500">🛡️</span> VPN Settings
       </h2>
-      <p class="text-[#94A3B8] text-sm">Secure access to game networks (172.x.x.x)</p>
+      <p class="text-[#94A3B8] text-sm">Secure access to game networks (10.200.x.x)</p>
     </div>
 
     <div v-if="loading" class="w-full flex justify-center py-4">

@@ -148,6 +148,10 @@ public class VpnService {
         execInContainer("wg", "set", WG_INTERFACE,
                 "peer", player.getVpnPublicKey(),
                 "allowed-ips", player.getVpnIp() + "/32");
+        // wg set does NOT add a kernel route — add it explicitly so replies
+        // are routed back through the tunnel instead of the default gateway.
+        execInContainer("ip", "route", "replace",
+                player.getVpnIp() + "/32", "dev", WG_INTERFACE);
         System.out.println("Registered WireGuard peer for: " + player.getPlayer()
                 + " (" + player.getVpnIp() + ")");
     }
@@ -159,6 +163,9 @@ public class VpnService {
     public void removePeer(Player player) {
         if (player.getVpnPublicKey() == null) return;
         execInContainer("wg", "set", WG_INTERFACE, "peer", player.getVpnPublicKey(), "remove");
+        if (player.getVpnIp() != null) {
+            execInContainer("ip", "route", "del", player.getVpnIp() + "/32", "dev", WG_INTERFACE);
+        }
         System.out.println("Removed WireGuard peer for: " + player.getPlayer());
     }
 
@@ -175,12 +182,11 @@ public class VpnService {
 
         return "[Interface]\n" +
                "PrivateKey = " + privateKey + "\n" +
-               "Address = " + player.getVpnIp() + "/32\n" +
-               "DNS = 8.8.8.8\n\n" +
+               "Address = " + player.getVpnIp() + "/32\n\n" +
                "[Peer]\n" +
                "PublicKey = " + serverPub + "\n" +
                "Endpoint = " + endpoint + "\n" +
-               "AllowedIPs = 10.8.19.0/24, 172.0.0.0/8\n" +
+               "AllowedIPs = 10.8.19.0/24, 10.200.0.0/16\n" +
                "PersistentKeepalive = 25\n";
     }
 

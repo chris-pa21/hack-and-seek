@@ -14,9 +14,6 @@ import java.util.Optional;
 public interface PlayerRepository extends JpaRepository<Player, String>{
     Optional<Player> findByPlayer(String username);
 
-    Optional<Player> findByEmail(String email);
-
-
     @Query("""
        select f
        from Player p

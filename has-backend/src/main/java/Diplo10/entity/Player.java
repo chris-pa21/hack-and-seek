@@ -20,8 +20,6 @@ public class Player {
 
     private String password;
 
-    private String email;
-
     private Integer points;
 
     private String vpnIp;
@@ -42,10 +40,9 @@ public class Player {
     @JsonIgnore
     private Set<Player> friends = new HashSet<>();
 
-    public Player(String name, String password, String email) {
+    public Player(String name, String password) {
         this.player = name;
         this.password = password;
-        this.email = email;
         this.points = 0;
     }
 }

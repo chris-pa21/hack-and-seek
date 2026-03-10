@@ -29,6 +29,8 @@ public class Team {
 
     private boolean defeated;
 
+    private boolean disqualified;
+
     @ManyToMany
     private List<Player> team_members;
 

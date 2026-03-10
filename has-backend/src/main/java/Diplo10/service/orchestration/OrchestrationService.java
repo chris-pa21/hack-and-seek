@@ -37,6 +37,7 @@ public class OrchestrationService {
         String flag = result.flag();
         int points = result.points();
         String rootPassword = result.rootPassword();
+        String flagPath = result.flagPath();
 
         // Save to DB with proper relationships
         ContainerEntity entity = ContainerEntity.builder()
@@ -49,6 +50,7 @@ public class OrchestrationService {
                 .flag(flag)
                 .points(points)
                 .rootPassword(rootPassword)
+                .flagPath(flagPath)
                 .createdAt(LocalDateTime.now())
                 .build();
 

@@ -37,16 +37,11 @@ public class AuthController {
         if (playerRepository.findByPlayer(req.username).isPresent()) {
             return ResponseEntity.status(409).body("player already exists");
         }
-        if (req.email != null && !req.email.isBlank()
-                && playerRepository.findByEmail(req.email).isPresent()) {
-            return ResponseEntity.status(409).body("email already exists");
-        }
 
         Player saved = playerRepository.save(
                 new Player(
                         req.username,
-                        passwordEncoder.encode(req.password),
-                        req.email
+                        passwordEncoder.encode(req.password)
                 )
         );
 
@@ -78,5 +73,5 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
-    public record RegisterRequest(String username, String email, String password, String confirmPassword) {}
+    public record RegisterRequest(String username, String password, String confirmPassword) {}
 }

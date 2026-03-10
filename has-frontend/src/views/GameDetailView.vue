@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UserNavbar from '@/components/UserNavbar.vue'
 import GameService from '@/services/GameService'
@@ -75,6 +75,10 @@ const sortedTeams = computed(() => {
   return [...teams.value].sort((a, b) => (b.score || 0) - (a.score || 0))
 })
 
+const disqualifiedTeams = computed(() => {
+  return teams.value.filter((t) => t.disqualified)
+})
+
 const fetchDefeatLog = async () => {
   try {
     const res = await GameService.getDefeatLog(gameId)
@@ -118,8 +122,8 @@ const fetchContainers = async () => {
   }
 }
 
-const fetchGame = async () => {
-  isLoading.value = true
+const fetchGame = async (silent = false) => {
+  if (!silent) isLoading.value = true
   try {
     const response = await GameService.getGame(gameId)
     game.value = response.data
@@ -131,7 +135,7 @@ const fetchGame = async () => {
   } catch (error) {
     console.error('Failed to fetch game:', error)
   } finally {
-    isLoading.value = false
+    if (!silent) isLoading.value = false
   }
 }
 
@@ -213,12 +217,24 @@ const displayTeamName = (name) => {
   return name?.split('_game')[0] ?? name
 }
 
+let pollInterval = null
+
 onMounted(async () => {
   fetchGame()
   try {
     const res = await GameService.getChallenges()
     challenges.value = res.data
   } catch (e) {}
+
+  pollInterval = setInterval(() => {
+    if (isStarted.value && !isFinished.value) {
+      fetchGame(true)
+    }
+  }, 5000)
+})
+
+onUnmounted(() => {
+  clearInterval(pollInterval)
 })
 </script>
 
@@ -396,7 +412,10 @@ onMounted(async () => {
             <h2 class="text-2xl font-bold text-[#E0E6F0]">Submit Flag</h2>
           </div>
           <div class="px-6 py-5">
-            <div v-if="isDefeated" class="text-[#DC0B00] text-sm font-semibold">
+            <div v-if="myTeam?.disqualified" class="text-[#DC0B00] text-sm font-semibold">
+              Your team has been disqualified for rule violation (-50 pts). You can no longer submit flags.
+            </div>
+            <div v-else-if="isDefeated" class="text-[#DC0B00] text-sm font-semibold">
               Your team has been defeated. You can no longer submit flags.
             </div>
             <template v-else>
@@ -431,6 +450,9 @@ onMounted(async () => {
               >
               <span class="flex items-center gap-1"
                 ><span class="w-2 h-2 rounded-full bg-[#DC0B00] inline-block"></span> Defeated</span
+              >
+              <span class="flex items-center gap-1"
+                ><span class="w-2 h-2 rounded-full bg-[#9333EA] inline-block"></span> Disqualified</span
               >
               <span class="flex items-center gap-1"
                 ><span class="w-2 h-2 rounded-full bg-gray-500 inline-block"></span> Active</span
@@ -509,10 +531,27 @@ onMounted(async () => {
           <div class="px-6 py-4 border-b border-gray-700">
             <h2 class="text-2xl font-bold text-[#E0E6F0]">Defeat Log</h2>
           </div>
-          <div v-if="defeatLog.length === 0" class="px-6 py-8 text-center text-gray-500 text-sm">
+          <div v-if="defeatLog.length === 0 && disqualifiedTeams.length === 0" class="px-6 py-8 text-center text-gray-500 text-sm">
             No captures yet.
           </div>
           <div v-else class="divide-y divide-gray-800">
+            <div
+              v-for="team in disqualifiedTeams"
+              :key="'dq-' + team.name"
+              class="px-6 py-4 flex items-center justify-between"
+            >
+              <div class="text-sm text-[#E0E6F0]">
+                <span class="text-[#9333EA] font-semibold">{{
+                  displayTeamName(team.name)
+                }}</span>
+                <span class="text-gray-500"> was </span>
+                <span class="text-[#9333EA] font-semibold">disqualified</span>
+                <span class="text-gray-500"> for rule violation</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-[#DC0B00] font-bold text-sm">-50 pts</span>
+              </div>
+            </div>
             <div
               v-for="entry in defeatLog"
               :key="entry.id"

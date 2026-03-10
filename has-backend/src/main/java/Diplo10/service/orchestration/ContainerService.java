@@ -75,7 +75,7 @@ public class ContainerService {
                 .exec().getId();
         dockerClient.execStartCmd(pwExecId).exec(new ResultCallback.Adapter<Frame>());
 
-        return new SpawnResult(containerId, ipAddress, flag, points, rootPassword);
+        return new SpawnResult(containerId, ipAddress, flag, points, rootPassword, flagPath);
     }
 
     private String generateRootPassword() {

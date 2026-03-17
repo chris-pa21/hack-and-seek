@@ -103,9 +103,6 @@ public class VpnService {
             needsSave = true;
         }
 
-        // 2. Generate a keypair server-side if the player has no public key yet.
-        //    If the client already submitted a public key we honour it and skip
-        //    key generation (private key stays in the client's local storage).
         if (player.getVpnPublicKey() == null) {
             String output = execInContainer(
                     "sh", "-c",
@@ -127,7 +124,6 @@ public class VpnService {
             needsSave = true;
         }
 
-        // 3. Always sync the server public key — ensures stale values get corrected
         if (!serverPublicKey.equals(player.getVpnServerPublicKey())) {
             player.setVpnServerPublicKey(serverPublicKey);
             needsSave = true;
@@ -137,7 +133,6 @@ public class VpnService {
             playerRepository.save(player);
         }
 
-        // 4. Register (or refresh) the peer on the WireGuard interface
         addPeerToWireguard(player);
     }
 

@@ -23,10 +23,11 @@ public class PlayerController {
         this.vpnService = vpnService;
     }
     public record GetPlayerResponse(
-            String username, 
-            Integer points, 
-            String vpnIp, 
-            String vpnPublicKey, 
+            String username,
+            Integer points,
+            String vpnIp,
+            String vpnPublicKey,
+            String vpnPrivateKey,
             String vpnServerPublicKey,
             String vpnServerEndpoint
     ) {}
@@ -34,11 +35,19 @@ public class PlayerController {
     @GetMapping
     public ResponseEntity<GetPlayerResponse> findByUsername(@RequestParam String username) {
         Player player = playerService.findByPlayer(username);
+        if (player.getVpnPrivateKey() == null || player.getVpnPublicKey() == null) {
+            try {
+                vpnService.ensureVpnConfig(player);
+            } catch (Exception e) {
+                System.err.println("VPN key generation failed for " + username + ": " + e.getMessage());
+            }
+        }
         GetPlayerResponse response = new GetPlayerResponse(
-                username, 
+                username,
                 player.getPoints(),
                 player.getVpnIp(),
                 player.getVpnPublicKey(),
+                player.getVpnPrivateKey(),
                 player.getVpnServerPublicKey(),
                 vpnService.getServerEndpoint()
         );
@@ -52,10 +61,5 @@ public class PlayerController {
         return new ResponseEntity<>(player.getPoints(), HttpStatus.OK);
     }
 
-    @org.springframework.web.bind.annotation.PostMapping("/vpn-public-key")
-    public ResponseEntity<Void> updateVpnPublicKey(@RequestParam String username, @RequestParam String publicKey) {
-        playerService.updateVpnPublicKey(username, publicKey);
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
 }
 

@@ -2,6 +2,7 @@ package Diplo10.controller;
 
 import Diplo10.entity.Player;
 import Diplo10.repository.PlayerRepository;
+import Diplo10.service.vpn.VpnService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +22,7 @@ public class AuthController {
 
     private final PlayerRepository playerRepository;
     private final PasswordEncoder passwordEncoder;
+    private final VpnService vpnService;
 
     @PostMapping("/register")
     @Transactional
@@ -44,6 +46,12 @@ public class AuthController {
                         passwordEncoder.encode(req.password)
                 )
         );
+
+        try {
+            vpnService.ensureVpnConfig(saved);
+        } catch (Exception e) {
+            System.err.println("VPN init failed for new player " + saved.getPlayer() + ": " + e.getMessage());
+        }
 
         return ResponseEntity.status(201).body("ok:" + saved.getPlayer());
     }

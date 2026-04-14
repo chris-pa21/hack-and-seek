@@ -10,21 +10,10 @@ import org.springframework.stereotype.Service;
 public class PlayerService {
 
     private PlayerRepository playerRepository;
-    private Diplo10.service.vpn.VpnService vpnService;
 
     @Autowired
-    public PlayerService(PlayerRepository playerRepository, Diplo10.service.vpn.VpnService vpnService) {
+    public PlayerService(PlayerRepository playerRepository) {
         this.playerRepository = playerRepository;
-        this.vpnService = vpnService;
-    }
-
-
-
-    @Transactional
-    public void updateVpnPublicKey(String playerName, String publicKey) {
-        Player player = findByPlayer(playerName);
-        player.setVpnPublicKey(publicKey);
-        vpnService.ensureVpnConfig(player);
     }
 
     @Transactional

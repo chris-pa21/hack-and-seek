@@ -54,9 +54,19 @@ public class ContainerService {
         var networks = inspectResponse.getNetworkSettings().getNetworks();
         if (networks != null) {
             for (var entry : networks.values()) {
-                if (entry.getIpAddress() != null && !entry.getIpAddress().isEmpty()) {
+                if (networkId.equals(entry.getNetworkID())
+                        && entry.getIpAddress() != null && !entry.getIpAddress().isEmpty()) {
                     ipAddress = entry.getIpAddress();
                     break;
+                }
+            }
+            // fallback: take any non-empty IP
+            if (ipAddress.isEmpty()) {
+                for (var entry : networks.values()) {
+                    if (entry.getIpAddress() != null && !entry.getIpAddress().isEmpty()) {
+                        ipAddress = entry.getIpAddress();
+                        break;
+                    }
                 }
             }
         }

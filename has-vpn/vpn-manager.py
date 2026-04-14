@@ -23,6 +23,8 @@ def init_firewall():
     run_cmd(["iptables", "-F", "FORWARD"])
     run_cmd(["iptables", "-P", "FORWARD", "DROP"])
     run_cmd(["iptables", "-A", "FORWARD", "-m", "conntrack", "--ctstate", "ESTABLISHED,RELATED", "-j", "ACCEPT"])
+    # Masquerade VPN traffic going into Docker networks so containers can route replies back
+    run_cmd(["iptables", "-t", "nat", "-A", "POSTROUTING", "-s", "10.8.19.0/24", "!", "-o", "wg0", "-j", "MASQUERADE"])
 
 def validate_subnet(subnet):
     """Validates that the input is a valid CIDR subnet."""

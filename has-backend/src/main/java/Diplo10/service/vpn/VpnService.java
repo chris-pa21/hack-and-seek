@@ -222,10 +222,6 @@ public class VpnService {
         }
     }
 
-    public String getServerEndpoint() {
-        return serverEndpoint;
-    }
-
     // -------------------------------------------------------------------------
     // Internal helpers
     // -------------------------------------------------------------------------

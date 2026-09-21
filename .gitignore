@@ -1,2 +1,13 @@
+# Local environment configuration
 .env
+
+# WireGuard runtime state. The server and peer keys live here - never commit
+# them. /config is the compose mount, has-backend/vpn/config an older copy.
 /config
+**/vpn/config/
+
+# Key material, wherever it turns up
+privatekey-*
+presharedkey-*
+publickey-*
+*-wg.conf

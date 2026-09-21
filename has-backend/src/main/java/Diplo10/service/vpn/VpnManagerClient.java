@@ -12,8 +12,9 @@ public class VpnManagerClient {
 
     private final RestClient restClient;
 
-    public VpnManagerClient(@Value("${vpn.manager.url:http://wireguard-server:9999}") String baseUrl) {
-        this.restClient = RestClient.builder()
+    public VpnManagerClient(RestClient.Builder restClientBuilder,
+                            @Value("${vpn.manager.url:http://wireguard-server:9999}") String baseUrl) {
+        this.restClient = restClientBuilder
                 .baseUrl(baseUrl)
                 .build();
     }

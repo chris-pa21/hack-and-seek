@@ -10,11 +10,9 @@ const loading = ref(false)
 const error = ref(null)
 
 const fetchVpnData = async () => {
-  const username = auth.user?.username || auth.user?.player
-  if (!username) return
   loading.value = true
   try {
-    const response = await UserService.getUser(username)
+    const response = await UserService.getMe()
     vpnData.value = response.data
   } catch (err) {
     error.value = 'Failed to fetch VPN data'
@@ -24,21 +22,17 @@ const fetchVpnData = async () => {
   }
 }
 
-const downloadConfig = () => {
+const downloadConfig = async () => {
   const username = auth.user?.username || auth.user?.player
-  if (!vpnData.value || !username) return
-  if (!vpnData.value.vpnPrivateKey || !vpnData.value.vpnPublicKey) {
-    error.value = 'VPN keys are not ready yet. Please refresh and try again.'
-    return
-  }
+  if (!username) return
+  error.value = null
 
-  VpnService.downloadConfig(
-    username,
-    vpnData.value.vpnIp,
-    vpnData.value.vpnServerPublicKey,
-    vpnData.value.vpnServerEndpoint,
-    vpnData.value.vpnPrivateKey
-  )
+  try {
+    await VpnService.downloadConfig(username)
+  } catch (err) {
+    error.value = 'VPN config is not ready yet. Please refresh and try again.'
+    console.error(err)
+  }
 }
 
 watch(() => auth.user, (newUser) => {

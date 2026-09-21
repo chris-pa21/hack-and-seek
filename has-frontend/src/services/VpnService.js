@@ -1,17 +1,15 @@
-export default {
-    downloadConfig(username, vpnIp, serverPublicKey, serverEndpoint, privateKey) {
-        const config = `[Interface]
-PrivateKey = ${privateKey}
-Address = ${vpnIp}/32
+import axios from '@/plugins/axios'
 
-[Peer]
-PublicKey = ${serverPublicKey}
-Endpoint = ${serverEndpoint}
-AllowedIPs = 10.8.19.0/24, 10.200.0.0/16
-PersistentKeepalive = 25
-`
-        const blob = new Blob([config], { type: 'text/plain' })
-        const url = URL.createObjectURL(blob)
+export default {
+    /**
+     * Downloads the WireGuard config for the logged-in player. The file is
+     * built server-side from the session, so no key material is ever handled
+     * by the browser.
+     */
+    async downloadConfig(username) {
+        const response = await axios.get('/api/user/me/vpn-config', { responseType: 'blob' })
+
+        const url = URL.createObjectURL(response.data)
         const link = document.createElement('a')
         link.href = url
         link.download = `${username}-wg.conf`

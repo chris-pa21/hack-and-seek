@@ -4,4 +4,8 @@ export default {
   getUser(username) {
     return axios.get('/api/user', { params: { username } })
   },
+
+  getMe() {
+    return axios.get('/api/user/me')
+  },
 }

@@ -1,5 +1,6 @@
 package Diplo10.controller;
 
+import Diplo10.exception.NotFoundException;
 import Diplo10.entity.ContainerEntity;
 import Diplo10.entity.Game;
 import Diplo10.entity.Team;
@@ -36,14 +37,14 @@ public class OrchestrationController {
     @GetMapping("/session/game/{gameId}")
     public ResponseEntity<List<ContainerEntity>> getContainersByGame(@PathVariable Long gameId) {
         Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new NullPointerException("Game not found"));
+                .orElseThrow(() -> new NotFoundException("Game not found"));
         return ResponseEntity.ok(containerRepository.findByGame(game));
     }
 
     @DeleteMapping("/stop/{gameId}")
     public ResponseEntity<String> stopGame(@PathVariable Long gameId) {
         Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new NullPointerException("Game not found"));
+                .orElseThrow(() -> new NotFoundException("Game not found"));
         orchestrationService.terminateGame(game);
         return ResponseEntity.ok("Game '" + game.getName() + "' terminated. All resources cleaned up.");
     }

@@ -1,5 +1,6 @@
 package Diplo10.service;
 
+import Diplo10.exception.NotFoundException;
 import Diplo10.entity.Game;
 import Diplo10.entity.Player;
 import Diplo10.entity.Team;
@@ -99,11 +100,11 @@ public class GameService {
 
     public boolean dismissGame(Long gameId, String username) {
         Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new NullPointerException("Game not found"));
+                .orElseThrow(() -> new NotFoundException("Game not found"));
 
         // Find the player
         Player player = playerRepository.findByPlayer(username)
-                .orElseThrow(() -> new NullPointerException("Player not found"));
+                .orElseThrow(() -> new NotFoundException("Player not found"));
 
         // Remove player from their team in this game
         for (Team team : game.getTeam_list()) {

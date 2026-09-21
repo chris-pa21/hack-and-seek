@@ -1,5 +1,6 @@
 package Diplo10.controller;
 
+import Diplo10.exception.NotFoundException;
 import Diplo10.dto.ChallengeDTO;
 import Diplo10.entity.ContainerEntity;
 import Diplo10.entity.FlagSubmission;
@@ -102,14 +103,14 @@ public class GameController {
     @GetMapping("/{gameId}")
     public ResponseEntity<Game> getGame(@PathVariable Long gameId) {
         Game game = this.gameRepository.findById(gameId)
-                .orElseThrow(() -> new NullPointerException("Game not found"));
+                .orElseThrow(() -> new NotFoundException("Game not found"));
         return ResponseEntity.ok(game);
     }
 
     @PostMapping("/{gameId}/start")
     public ResponseEntity<Game> startGame(@PathVariable Long gameId, Authentication authentication) {
         Game game = this.gameRepository.findById(gameId)
-                .orElseThrow(() -> new NullPointerException("Game not found"));
+                .orElseThrow(() -> new NotFoundException("Game not found"));
         String username = authentication.getName();
         if (game.getCreated_by() == null || !game.getCreated_by().getPlayer().equals(username)) {
             return ResponseEntity.status(403).build();
@@ -127,7 +128,7 @@ public class GameController {
     @PostMapping("/{gameId}/stop")
     public ResponseEntity<Game> stopGame(@PathVariable Long gameId, Authentication authentication) {
         Game game = this.gameRepository.findById(gameId)
-                .orElseThrow(() -> new NullPointerException("Game not found"));
+                .orElseThrow(() -> new NotFoundException("Game not found"));
         String username = authentication.getName();
         if (game.getCreated_by() == null || !game.getCreated_by().getPlayer().equals(username)) {
             return ResponseEntity.status(403).build();
@@ -205,7 +206,7 @@ public class GameController {
     public ResponseEntity<Map<String, Object>> dismissGame(@PathVariable Long gameId, Authentication authentication) {
         String username = authentication.getName();
         Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new NullPointerException("Game not found"));
+                .orElseThrow(() -> new NotFoundException("Game not found"));
 
         if (game.getFinished_at() == null) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Game is not finished yet"));
@@ -219,7 +220,7 @@ public class GameController {
     public ResponseEntity<Map<String, String>> getCredentials(@PathVariable Long gameId, Authentication authentication) {
         String username = authentication.getName();
         Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new NullPointerException("Game not found"));
+                .orElseThrow(() -> new NotFoundException("Game not found"));
 
         // Find the team the authenticated user belongs to
         Team userTeam = game.getTeam_list().stream()

@@ -1,5 +1,6 @@
 package Diplo10.service;
 
+import Diplo10.exception.NotFoundException;
 import Diplo10.entity.ContainerEntity;
 import Diplo10.entity.FlagSubmission;
 import Diplo10.entity.Game;
@@ -34,7 +35,7 @@ public class FlagService {
     @Transactional
     public Map<String, Object> submitFlag(Long gameId, String username, String flagString) {
         Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new NullPointerException("Game not found"));
+                .orElseThrow(() -> new NotFoundException("Game not found"));
 
         if (game.getFinished_at() != null) {
             return Map.of("success", false, "message", "This game is already finished");

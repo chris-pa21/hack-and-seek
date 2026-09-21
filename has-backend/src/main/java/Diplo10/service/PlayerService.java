@@ -1,5 +1,6 @@
 package Diplo10.service;
 
+import Diplo10.exception.NotFoundException;
 import Diplo10.entity.Player;
 import Diplo10.repository.PlayerRepository;
 import jakarta.transaction.Transactional;
@@ -18,6 +19,6 @@ public class PlayerService {
 
     @Transactional
     public Player findByPlayer(String playerName) {
-        return playerRepository.findByPlayer(playerName).orElseThrow(() -> new NullPointerException("Player with username " + playerName + " not found"));
+        return playerRepository.findByPlayer(playerName).orElseThrow(() -> new NotFoundException("Player with username " + playerName + " not found"));
     }
 }

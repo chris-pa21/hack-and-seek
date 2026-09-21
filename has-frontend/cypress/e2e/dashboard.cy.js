@@ -267,7 +267,7 @@ describe('Dashboard', () => {
 
       cy.intercept('POST', '/api/friend', {
         statusCode: 400,
-        body: 'Friend request already sent',
+        body: { status: 400, message: 'Friend request already sent' },
       }).as('sendDuplicate')
 
       cy.contains('h2', 'Add Friends')

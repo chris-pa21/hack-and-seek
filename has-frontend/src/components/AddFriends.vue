@@ -44,13 +44,12 @@ const sendFriendRequest = async () => {
     sendRequestButton.value = false
   } catch (error) {
     if (error.response) {
+      const message = error.response.data?.message
       if (error.response.status === 400) {
-        if (error.response.data === 'Friend request already sent') {
-          errorMessage.value = error.response.data
-          sendRequestButton.value = false
-        }
+        errorMessage.value = message || 'Could not send the friend request.'
+        sendRequestButton.value = false
       } else if (error.response.status === 404) {
-        errorMessage.value = error.response.data?.message || 'User not found.'
+        errorMessage.value = message || 'User not found.'
       } else {
         errorMessage.value = 'An error occurred while sending the friend request.'
       }

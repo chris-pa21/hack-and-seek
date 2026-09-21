@@ -135,9 +135,6 @@ describe('Game Detail Page', () => {
       cy.contains('button', 'Start Game').should('not.exist')
     })
 
-    it('does not show Download config button before game starts', () => {
-      cy.contains('button', /Download game.*\.cfg/).should('not.exist')
-    })
   })
 
   // ── Running View ───────────────────────────────────────────────────────
@@ -155,9 +152,6 @@ describe('Game Detail Page', () => {
       cy.contains('Running')
     })
 
-    it('shows the Download config button', () => {
-      cy.contains('button', /Download game.*\.cfg/).should('be.visible')
-    })
 
     it('displays the flag submission form', () => {
       cy.contains('h2', 'Submit Flag')
@@ -215,7 +209,9 @@ describe('Game Detail Page', () => {
         body: { success: true, message: 'Flag accepted! +50 points' },
       }).as('submitFlag')
 
-      cy.get('input[placeholder="HAS{...}"]').type('HAS{test_flag_123}')
+      cy.get('input[placeholder="HAS{...}"]').type('HAS{test_flag_123}', {
+        parseSpecialCharSequences: false,
+      })
       cy.contains('button', 'Submit').click()
 
       cy.wait('@submitFlag')
@@ -228,7 +224,9 @@ describe('Game Detail Page', () => {
         body: { success: false, message: 'Invalid flag' },
       }).as('submitFlagInvalid')
 
-      cy.get('input[placeholder="HAS{...}"]').type('HAS{wrong}')
+      cy.get('input[placeholder="HAS{...}"]').type('HAS{wrong}', {
+        parseSpecialCharSequences: false,
+      })
       cy.contains('button', 'Submit').click()
 
       cy.wait('@submitFlagInvalid')
@@ -241,7 +239,9 @@ describe('Game Detail Page', () => {
         body: { success: true, message: 'Flag accepted!' },
       }).as('submitFlag')
 
-      cy.get('input[placeholder="HAS{...}"]').type('HAS{flag}')
+      cy.get('input[placeholder="HAS{...}"]').type('HAS{flag}', {
+        parseSpecialCharSequences: false,
+      })
       cy.contains('button', 'Submit').click()
       cy.wait('@submitFlag')
 
@@ -249,10 +249,17 @@ describe('Game Detail Page', () => {
     })
 
     it('does not submit empty flag', () => {
+      cy.intercept('POST', '/api/games/1/submit-flag', {
+        statusCode: 200,
+        body: { success: true, message: 'should never be called' },
+      }).as('submitFlag')
+
       cy.get('input[placeholder="HAS{...}"]').should('have.value', '')
       cy.contains('button', 'Submit').click()
-      // No network request should be made
-      cy.get('@submitFlag').should('not.exist')
+
+      // the alias has to exist for this to assert anything: cy.get on an
+      // unregistered alias throws instead of failing the assertion
+      cy.get('@submitFlag.all').should('have.length', 0)
     })
 
     it('submits flag on Enter key', () => {
@@ -261,7 +268,10 @@ describe('Game Detail Page', () => {
         body: { success: true, message: 'Flag accepted!' },
       }).as('submitFlagEnter')
 
-      cy.get('input[placeholder="HAS{...}"]').type('HAS{enter_flag}{enter}')
+      cy.get('input[placeholder="HAS{...}"]').type('HAS{enter_flag}', {
+        parseSpecialCharSequences: false,
+      })
+      cy.get('input[placeholder="HAS{...}"]').type('{enter}')
       cy.wait('@submitFlagEnter')
     })
 

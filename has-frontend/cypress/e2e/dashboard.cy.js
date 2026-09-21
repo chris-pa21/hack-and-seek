@@ -196,7 +196,9 @@ describe('Dashboard', () => {
       cy.get('input[placeholder="Enter match name..."]').type('New Game')
       cy.contains('button', '+ Add Team').click()
       cy.get('input[placeholder="Team Name"]').type('Alpha')
-      cy.contains('button', 'Create Game').click()
+      // exact match: 'Create Game' is also a substring of the dashboard's
+      // '+ Create Game' button, which sits behind the modal overlay
+      cy.contains('button', /^\s*Create Game\s*$/).click()
 
       cy.wait('@createGame')
       cy.contains('h2', 'Create New Game').should('not.exist')
@@ -316,7 +318,7 @@ describe('Dashboard', () => {
       cy.wait('@getRequests')
 
       // Click the accept (checkmark) button
-      cy.contains('dave').parent().find('.primary-button').click()
+      cy.contains('dave').parent().find('.primary-button-sm').click()
       cy.wait('@acceptRequest')
     })
 
@@ -335,7 +337,7 @@ describe('Dashboard', () => {
       cy.wait('@getRequests')
 
       // Click the refuse (X) button
-      cy.contains('dave').parent().find('.danger-button').click()
+      cy.contains('dave').parent().find('.danger-button-sm').click()
       cy.wait('@refuseRequest')
     })
   })
@@ -379,7 +381,7 @@ describe('Dashboard', () => {
         .parent()
         .contains('alice')
         .parent()
-        .find('.danger-button')
+        .find('.danger-button-sm')
         .click()
 
       cy.wait('@deleteFriend')

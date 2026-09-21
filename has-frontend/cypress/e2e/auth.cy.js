@@ -85,7 +85,6 @@ describe('Authentication', () => {
     it('displays the registration form', () => {
       cy.contains('h1', 'Create Account')
       cy.get('input[placeholder="username"]').should('be.visible')
-      cy.get('input[placeholder="email"]').should('be.visible')
       cy.get('input[placeholder="password"]').should('be.visible')
       cy.get('input[placeholder="confirm password"]').should('be.visible')
       cy.contains('button', 'register')
@@ -96,19 +95,7 @@ describe('Authentication', () => {
       cy.contains('Please fill in all fields')
     })
 
-    it('shows inline email validation error', () => {
-      cy.get('input[placeholder="email"]').type('notanemail')
-      cy.contains('email not valid')
-    })
 
-    it('shows email error on submit with invalid email', () => {
-      cy.get('input[placeholder="username"]').type('user1')
-      cy.get('input[placeholder="email"]').type('bademail')
-      cy.get('input[placeholder="password"]').type('pass123')
-      cy.get('input[placeholder="confirm password"]').type('pass123')
-      cy.contains('button', 'register').click()
-      cy.contains('email not valid')
-    })
 
     it('shows password mismatch inline warning', () => {
       cy.get('input[placeholder="password"]').type('pass123')
@@ -118,7 +105,6 @@ describe('Authentication', () => {
 
     it('shows error on password mismatch submit', () => {
       cy.get('input[placeholder="username"]').type('user1')
-      cy.get('input[placeholder="email"]').type('user1@test.com')
       cy.get('input[placeholder="password"]').type('pass123')
       cy.get('input[placeholder="confirm password"]').type('different')
       cy.contains('button', 'register').click()
@@ -132,7 +118,6 @@ describe('Authentication', () => {
       }).as('register')
 
       cy.get('input[placeholder="username"]').type('newuser')
-      cy.get('input[placeholder="email"]').type('new@test.com')
       cy.get('input[placeholder="password"]').type('pass123')
       cy.get('input[placeholder="confirm password"]').type('pass123')
       cy.contains('button', 'register').click()
@@ -148,7 +133,6 @@ describe('Authentication', () => {
       }).as('registerConflict')
 
       cy.get('input[placeholder="username"]').type('existinguser')
-      cy.get('input[placeholder="email"]').type('exists@test.com')
       cy.get('input[placeholder="password"]').type('pass123')
       cy.get('input[placeholder="confirm password"]').type('pass123')
       cy.contains('button', 'register').click()
@@ -164,7 +148,6 @@ describe('Authentication', () => {
       }).as('registerBadRequest')
 
       cy.get('input[placeholder="username"]').type('u')
-      cy.get('input[placeholder="email"]').type('u@t.com')
       cy.get('input[placeholder="password"]').type('p')
       cy.get('input[placeholder="confirm password"]').type('p')
       cy.contains('button', 'register').click()

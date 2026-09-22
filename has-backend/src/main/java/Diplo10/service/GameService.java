@@ -27,26 +27,6 @@ public class GameService {
     private final NetworkService networkService;
     private final VpnService vpnService;
 
-    public void addTeam(Team team, Long gameId) {
-        Game game = this.gameRepository.findById(gameId).get();
-        game.addTeam(team);
-        gameRepository.save(game);
-    }
-
-    public void addPlayer(Long gameId, String teamId, Player player) {
-        Game game = gameRepository.findById(gameId).get();
-        Team team = teamRepository.findByGameIdAndName(Math.toIntExact(gameId), teamId).get();
-        team.addPlayer(player);
-        teamRepository.save(team);
-    }
-
-    public void deleteTeam(String teamId, Long gameId) {
-        Team team = this.teamRepository.findByName(teamId).get();
-        Game game = this.gameRepository.findById(gameId).get();
-        game.deleteTeam(team);
-        gameRepository.save(game);
-    }
-
     /**
      * Starts a game, all or nothing: a game is only fair if every team has a
      * container, so any failure tears down what was already created and leaves
@@ -82,12 +62,6 @@ public class GameService {
         vpnService.authorizeGameAccess(game, networkId);
 
         return game;
-    }
-
-    public void deletePlayer(String teamId, Long gameId, Player player) {
-        Team team = this.teamRepository.findByGameIdAndName(Math.toIntExact(gameId), teamId).get();
-        team.deletePlayer(player);
-        teamRepository.save(team);
     }
 
     public void endGame(Game game, Team winner) {

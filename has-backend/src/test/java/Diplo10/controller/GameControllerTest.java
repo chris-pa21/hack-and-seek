@@ -33,12 +33,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -250,21 +251,91 @@ class GameControllerTest {
         verify(containerRepository, never()).findByTeam(any());
     }
 
-    // ── adding a team ───────────────────────────────────────────────────
+    // ── creating ────────────────────────────────────────────────────────
 
     @Test
     @WithMockUser(username = "alice")
-    @DisplayName("a team added to a game is bound to that game's id")
-    void addedTeamKnowsItsGame() throws Exception {
-        mockMvc.perform(post("/api/games/{id}/team", GAME_ID).with(csrf()).param("name", "charlie"))
-                .andExpect(status().isOk());
+    @DisplayName("a game with a known challenge is created with its teams")
+    void gameWithKnownChallengeIsCreated() throws Exception {
+        stubChallenges();
+        when(playerRepository.findByPlayer("alice")).thenReturn(Optional.of(alice));
+        when(gameRepository.save(any(Game.class))).thenAnswer(inv -> {
+            Game saved = inv.getArgument(0);
+            saved.setId(7L);
+            return saved;
+        });
 
-        org.mockito.ArgumentCaptor<Team> team = org.mockito.ArgumentCaptor.forClass(Team.class);
-        verify(gameService).addTeam(team.capture(), org.mockito.ArgumentMatchers.eq(GAME_ID));
+        mockMvc.perform(post("/api/games/create").with(csrf())
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content(createRequest("ping-me")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.createdBy").value("alice"))
+                .andExpect(jsonPath("$.teams[0].name").value("red_game7"))
+                .andExpect(jsonPath("$.teams[0].challenge").value("ping-me"));
+    }
 
-        // with gameId left at 0, findByGameIdAndName could never find this team
-        assertThat(team.getValue().getName()).isEqualTo("charlie");
-        assertThat(team.getValue().getGameId()).isEqualTo((int) GAME_ID);
+    @Test
+    @WithMockUser(username = "alice")
+    @DisplayName("a challenge that is not a challenge image is rejected before anything is saved")
+    void unknownChallengeIsRejected() throws Exception {
+        stubChallenges();
+
+        // postgres is on the host, but it is not a challenge: never start it
+        mockMvc.perform(post("/api/games/create").with(csrf())
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content(createRequest("postgres")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Unknown challenge: postgres"));
+
+        verify(gameRepository, never()).save(any());
+        verify(teamRepository, never()).save(any());
+    }
+
+    @Test
+    @WithMockUser(username = "alice")
+    @DisplayName("a creation request without teams or players is rejected")
+    void incompleteCreateRequestIsRejected() throws Exception {
+        stubChallenges();
+
+        mockMvc.perform(post("/api/games/create").with(csrf())
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"g\"}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/games/create").with(csrf())
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"g\",\"teams\":[{\"name\":\"red\",\"challenge\":\"ping-me\"}]}"))
+                .andExpect(status().isBadRequest());
+
+        verify(gameRepository, never()).save(any());
+    }
+
+    // ── removed endpoints ───────────────────────────────────────────────
+
+    @Test
+    @WithMockUser(username = "stranger")
+    @DisplayName("the old unprotected game-management endpoints no longer exist")
+    void removedEndpointsAreGone() throws Exception {
+        stubGame();
+
+        mockMvc.perform(post("/api/games/{id}/{team}/addUser", GAME_ID, "alpha").with(csrf())
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content("{\"player\":\"stranger\"}"))
+                .andExpect(status().is4xxClientError());
+        mockMvc.perform(post("/api/games/{id}/team", GAME_ID).with(csrf()).param("name", "x"))
+                .andExpect(status().is4xxClientError());
+        mockMvc.perform(patch("/api/games/{id}", GAME_ID).with(csrf()).param("name", "x"))
+                .andExpect(status().is4xxClientError());
+        mockMvc.perform(delete("/api/games/{id}", GAME_ID).with(csrf()))
+                .andExpect(status().is4xxClientError());
+        mockMvc.perform(delete("/api/games/{id}/teams/{team}", GAME_ID, "alpha").with(csrf()))
+                .andExpect(status().is4xxClientError());
+        mockMvc.perform(get("/api/games/{id}/teams", GAME_ID))
+                .andExpect(status().is4xxClientError());
+
+        verify(gameRepository, never()).save(any());
+        verify(gameRepository, never()).deleteById(any());
+        verify(teamRepository, never()).save(any());
+        assertThat(alpha.getTeam_members()).extracting(Player::getPlayer).containsExactly("alice");
     }
 
     // ── defeat log ──────────────────────────────────────────────────────
@@ -305,6 +376,8 @@ class GameControllerTest {
     @WithMockUser(username = "alice")
     @DisplayName("an empty flag is rejected before reaching the scoring logic")
     void emptyFlagIsRejected() throws Exception {
+        stubGame();
+
         mockMvc.perform(post("/api/games/{id}/submit-flag", GAME_ID)
                         .with(csrf())
                         .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
@@ -318,6 +391,7 @@ class GameControllerTest {
     @WithMockUser(username = "alice")
     @DisplayName("the submitted flag is trimmed and attributed to the session user")
     void flagIsTrimmedAndAttributedToTheCaller() throws Exception {
+        stubGame();
         when(flagService.submitFlag(GAME_ID, "alice", "HAS{abc}"))
                 .thenReturn(java.util.Map.of("success", true));
 
@@ -329,6 +403,49 @@ class GameControllerTest {
 
         // the username comes from the session, never from the request body
         verify(flagService).submitFlag(GAME_ID, "alice", "HAS{abc}");
+    }
+
+    @Test
+    @WithMockUser(username = "stranger")
+    @DisplayName("someone not in the game cannot submit flags to it")
+    void outsiderCannotSubmitFlag() throws Exception {
+        stubGame();
+
+        mockMvc.perform(post("/api/games/{id}/submit-flag", GAME_ID)
+                        .with(csrf())
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content("{\"flag\":\"HAS{abc}\"}"))
+                .andExpect(status().isForbidden());
+
+        verify(flagService, never()).submitFlag(any(), any(), any());
+    }
+
+    // ── dismissing ──────────────────────────────────────────────────────
+
+    @Test
+    @WithMockUser(username = "bob")
+    @DisplayName("a player can dismiss a finished game they took part in")
+    void participantCanDismissFinishedGame() throws Exception {
+        game.setFinished_at(LocalDateTime.now());
+        stubGame();
+        when(gameService.dismissGame(GAME_ID, "bob")).thenReturn(false);
+
+        mockMvc.perform(post("/api/games/{id}/dismiss", GAME_ID).with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.gameDeleted").value(false));
+    }
+
+    @Test
+    @WithMockUser(username = "stranger")
+    @DisplayName("someone not in the game cannot dismiss it")
+    void outsiderCannotDismiss() throws Exception {
+        game.setFinished_at(LocalDateTime.now());
+        stubGame();
+
+        mockMvc.perform(post("/api/games/{id}/dismiss", GAME_ID).with(csrf()))
+                .andExpect(status().isForbidden());
+
+        verify(gameService, never()).dismissGame(any(), any());
     }
 
     // ── viewing ─────────────────────────────────────────────────────────
@@ -356,18 +473,12 @@ class GameControllerTest {
 
     @Test
     @WithMockUser(username = "stranger")
-    @DisplayName("someone who is not in the game cannot view it, its teams or a team")
+    @DisplayName("someone who is not in the game cannot view it")
     void outsiderCannotViewGame() throws Exception {
         stubGame();
 
         mockMvc.perform(get("/api/games/{id}", GAME_ID))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/games/{id}/teams", GAME_ID))
-                .andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/games/{id}/teams/{team}", GAME_ID, "alpha"))
-                .andExpect(status().isForbidden());
-
-        verify(teamRepository, never()).findByGameId(anyInt());
     }
 
     @Test
@@ -460,6 +571,17 @@ class GameControllerTest {
         player.setVpnPrivateKey("PRIVATE_KEY_" + player.getPlayer());
         player.setVpnPublicKey("PUBLIC_KEY_" + player.getPlayer());
         player.setVpnServerPublicKey("SERVER_KEY");
+    }
+
+    private void stubChallenges() {
+        when(imageService.listChallengeImages()).thenReturn(List.of(
+                new Diplo10.dto.ChallengeDTO("ping-me", 1),
+                new Diplo10.dto.ChallengeDTO("note-keeper", 1)));
+    }
+
+    private static String createRequest(String challenge) {
+        return "{\"name\":\"g\",\"teams\":[{\"name\":\"red\",\"challenge\":\"" + challenge
+                + "\",\"players\":[\"alice\"]}]}";
     }
 
     private void stubGame() {

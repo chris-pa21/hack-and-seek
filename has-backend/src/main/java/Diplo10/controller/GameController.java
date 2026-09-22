@@ -4,10 +4,8 @@ import Diplo10.exception.NotFoundException;
 import Diplo10.dto.ChallengeDTO;
 import Diplo10.dto.DefeatLogEntry;
 import Diplo10.dto.GameView;
-import Diplo10.dto.TeamView;
 import Diplo10.entity.ContainerEntity;
 import Diplo10.entity.Game;
-import Diplo10.entity.Player;
 import Diplo10.entity.Team;
 import Diplo10.repository.ContainerRepository;
 import Diplo10.repository.GameRepository;
@@ -26,7 +24,15 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+/**
+ * Every endpoint needs a logged-in user (SecurityConfig). On top of that, each
+ * game endpoint checks who the caller is in that game: the creator alone may
+ * start and stop it, and only the creator and the players taking part may see
+ * or act on it. Anyone else gets 403.
+ */
 @RestController
 @RequestMapping("/api/games")
 @RequiredArgsConstructor
@@ -50,6 +56,8 @@ public class GameController {
      */
     @PostMapping("/create")
     public ResponseEntity<GameView> createGame(@RequestBody CreateGameRequest req, Authentication authentication) {
+        validate(req);
+
         // 1. Save the bare game first to get an ID
         Game game = new Game();
         game.setName(req.name());
@@ -83,19 +91,6 @@ public class GameController {
         return ResponseEntity.status(201).body(view(game));
     }
 
-    @PostMapping("/{id}/team")
-    public ResponseEntity<Void> createTeam(@PathVariable Long id, @RequestParam String name) {
-        Team team = new Team(name, Math.toIntExact(id));
-        this.gameService.addTeam(team, id);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/{gameId}/{teamId}/addUser")
-    public ResponseEntity<Void> addPlayer(@PathVariable Long gameId, @PathVariable String teamId, @RequestBody Player player) {
-        this.gameService.addPlayer(gameId, teamId, player);
-        return ResponseEntity.ok().build();
-    }
-
     @GetMapping
     public ResponseEntity<List<GameView>> showGames(Authentication authentication) {
         String username = authentication.getName();
@@ -107,8 +102,7 @@ public class GameController {
 
     @GetMapping("/{gameId}")
     public ResponseEntity<GameView> getGame(@PathVariable Long gameId, Authentication authentication) {
-        Game game = this.gameRepository.findById(gameId)
-                .orElseThrow(() -> new NotFoundException("Game not found"));
+        Game game = findGame(gameId);
         if (!canView(game, authentication.getName())) {
             return ResponseEntity.status(403).build();
         }
@@ -117,10 +111,8 @@ public class GameController {
 
     @PostMapping("/{gameId}/start")
     public ResponseEntity<GameView> startGame(@PathVariable Long gameId, Authentication authentication) {
-        Game game = this.gameRepository.findById(gameId)
-                .orElseThrow(() -> new NotFoundException("Game not found"));
-        String username = authentication.getName();
-        if (game.getCreated_by() == null || !game.getCreated_by().getPlayer().equals(username)) {
+        Game game = findGame(gameId);
+        if (!isCreator(game, authentication.getName())) {
             return ResponseEntity.status(403).build();
         }
         if (game.getStarted_at() != null) {
@@ -135,10 +127,8 @@ public class GameController {
 
     @PostMapping("/{gameId}/stop")
     public ResponseEntity<GameView> stopGame(@PathVariable Long gameId, Authentication authentication) {
-        Game game = this.gameRepository.findById(gameId)
-                .orElseThrow(() -> new NotFoundException("Game not found"));
-        String username = authentication.getName();
-        if (game.getCreated_by() == null || !game.getCreated_by().getPlayer().equals(username)) {
+        Game game = findGame(gameId);
+        if (!isCreator(game, authentication.getName())) {
             return ResponseEntity.status(403).build();
         }
         if (game.getStarted_at() == null || game.getFinished_at() != null) {
@@ -159,62 +149,19 @@ public class GameController {
         return ResponseEntity.ok(view(game));
     }
 
-    @GetMapping("/{gameId}/teams")
-    public ResponseEntity<List<TeamView>> showTeams(@PathVariable Long gameId, Authentication authentication) {
-        Game game = this.gameRepository.findById(gameId)
-                .orElseThrow(() -> new NotFoundException("Game not found"));
-        if (!canView(game, authentication.getName())) {
-            return ResponseEntity.status(403).build();
-        }
-        List<TeamView> teams = this.teamRepository.findByGameId(Math.toIntExact(gameId)).stream()
-                .map(this::view)
-                .toList();
-        return ResponseEntity.ok(teams);
-    }
-
-    @GetMapping("/{gameId}/teams/{teamId}")
-    public ResponseEntity<TeamView> showTeam(@PathVariable Long gameId, @PathVariable String teamId,
-                                             Authentication authentication) {
-        Game game = this.gameRepository.findById(gameId)
-                .orElseThrow(() -> new NotFoundException("Game not found"));
-        if (!canView(game, authentication.getName())) {
-            return ResponseEntity.status(403).build();
-        }
-        Team team = this.teamRepository.findByGameIdAndName(Math.toIntExact(gameId), teamId)
-                .orElseThrow(() -> new NotFoundException("Team not found"));
-        return ResponseEntity.ok(view(team));
-    }
-
-    @PatchMapping("/{gameId}")
-    public ResponseEntity<Void> editGame(@PathVariable Long gameId, @RequestParam String name) {
-        Game game = this.gameRepository.findById(gameId).get();
-        game.setName(name);
-        gameRepository.save(game);
-        return ResponseEntity.ok().build();
-    }
-
-    @DeleteMapping("/{gameId}")
-    public ResponseEntity<Void> deleteGame(@PathVariable Long gameId) {
-        this.gameRepository.deleteById(gameId);
-        return ResponseEntity.ok().build();
-    }
-
-    @DeleteMapping("/{gameId}/teams/{teamId}")
-    public ResponseEntity<Void> deleteTeam(@PathVariable Long gameId, @PathVariable String teamId) {
-        this.gameService.deleteTeam(teamId, gameId);
-        return ResponseEntity.ok().build();
-    }
-
     @PostMapping("/{gameId}/submit-flag")
     public ResponseEntity<Map<String, Object>> submitFlag(
             @PathVariable Long gameId,
             @RequestBody Map<String, String> body,
             Authentication authentication) {
+        String username = authentication.getName();
+        if (!canView(findGame(gameId), username)) {
+            return ResponseEntity.status(403).build();
+        }
         String flag = body.get("flag");
         if (flag == null || flag.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Flag is required"));
         }
-        String username = authentication.getName();
         Map<String, Object> result = flagService.submitFlag(gameId, username, flag.trim());
         return ResponseEntity.ok(result);
     }
@@ -222,8 +169,7 @@ public class GameController {
     @GetMapping("/{gameId}/defeat-log")
     public ResponseEntity<List<DefeatLogEntry>> getDefeatLog(@PathVariable Long gameId,
                                                              Authentication authentication) {
-        Game game = this.gameRepository.findById(gameId)
-                .orElseThrow(() -> new NotFoundException("Game not found"));
+        Game game = findGame(gameId);
 
         if (teamOf(game, authentication.getName()) == null) {
             return ResponseEntity.status(403).build();
@@ -235,8 +181,11 @@ public class GameController {
     @PostMapping("/{gameId}/dismiss")
     public ResponseEntity<Map<String, Object>> dismissGame(@PathVariable Long gameId, Authentication authentication) {
         String username = authentication.getName();
-        Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new NotFoundException("Game not found"));
+        Game game = findGame(gameId);
+
+        if (!canView(game, username)) {
+            return ResponseEntity.status(403).build();
+        }
 
         if (game.getFinished_at() == null) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Game is not finished yet"));
@@ -249,8 +198,7 @@ public class GameController {
     @GetMapping("/{gameId}/credentials")
     public ResponseEntity<Map<String, String>> getCredentials(@PathVariable Long gameId, Authentication authentication) {
         String username = authentication.getName();
-        Game game = gameRepository.findById(gameId)
-                .orElseThrow(() -> new NotFoundException("Game not found"));
+        Game game = findGame(gameId);
 
         // Find the team the authenticated user belongs to
         Team userTeam = teamOf(game, username);
@@ -271,6 +219,34 @@ public class GameController {
     }
 
     /**
+     * Rejects a creation request before anything is saved. Challenges must be
+     * one of the challenge images the platform offers: the name is handed to
+     * Docker as an image to run, so anything else would let a creator start
+     * any image present on the host.
+     */
+    private void validate(CreateGameRequest req) {
+        if (req.teams() == null) {
+            throw new IllegalArgumentException("A game needs a list of teams");
+        }
+        Set<String> challenges = imageService.listChallengeImages().stream()
+                .map(ChallengeDTO::name)
+                .collect(Collectors.toSet());
+        for (CreateGameRequest.TeamRequest team : req.teams()) {
+            if (team.players() == null) {
+                throw new IllegalArgumentException("Team " + team.name() + " needs a list of players");
+            }
+            if (!challenges.contains(team.challenge())) {
+                throw new IllegalArgumentException("Unknown challenge: " + team.challenge());
+            }
+        }
+    }
+
+    private Game findGame(Long gameId) {
+        return gameRepository.findById(gameId)
+                .orElseThrow(() -> new NotFoundException("Game not found"));
+    }
+
+    /**
      * The game as sent to clients, with each team's container address filled
      * in from the containers that currently exist for it.
      */
@@ -284,11 +260,8 @@ public class GameController {
         return GameView.from(game, ipByTeam);
     }
 
-    private TeamView view(Team team) {
-        String ipAddress = containerRepository.findByTeam(team)
-                .map(ContainerEntity::getIpAddress)
-                .orElse(null);
-        return TeamView.from(team, ipAddress);
+    private boolean isCreator(Game game, String username) {
+        return game.getCreated_by() != null && game.getCreated_by().getPlayer().equals(username);
     }
 
     /**
@@ -296,9 +269,7 @@ public class GameController {
      * who plays, the scores and the addresses of the challenge containers.
      */
     private boolean canView(Game game, String username) {
-        boolean isCreator = game.getCreated_by() != null
-                && game.getCreated_by().getPlayer().equals(username);
-        return isCreator || teamOf(game, username) != null;
+        return isCreator(game, username) || teamOf(game, username) != null;
     }
 
     /**

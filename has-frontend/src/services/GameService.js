@@ -18,10 +18,6 @@ export default {
         return axios.post(`/api/games/${gameId}/start`)
     },
 
-    deleteGame(gameId) {
-        return axios.delete(`/api/games/${gameId}`)
-    },
-
     getChallenges() {
         return axios.get('/api/games/challenges')
     },

@@ -48,8 +48,4 @@ public class Game {
     public void addTeam(Team team) {
         team_list.add(team);
     }
-
-    public void deleteTeam(Team team) {
-        this.team_list.remove(team);
-    }
 }

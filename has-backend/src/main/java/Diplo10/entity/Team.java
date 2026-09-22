@@ -48,8 +48,4 @@ public class Team {
         this.team_members.add(player);
     }
 
-    public void deletePlayer(Player player){
-        this.team_members.remove(player);
-    }
-
 }

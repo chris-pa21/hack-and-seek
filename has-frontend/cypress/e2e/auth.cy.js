@@ -97,6 +97,18 @@ describe('Authentication', () => {
 
 
 
+    it('rejects a password shorter than 8 characters without calling the API', () => {
+      cy.intercept('POST', '/api/auth/register', cy.spy().as('registerCall'))
+
+      cy.get('input[placeholder="username"]').type('shorty')
+      cy.get('input[placeholder="password"]').type('short')
+      cy.get('input[placeholder="confirm password"]').type('short')
+      cy.contains('button', 'register').click()
+
+      cy.contains('Password must be at least 8 characters')
+      cy.get('@registerCall').should('not.have.been.called')
+    })
+
     it('shows password mismatch inline warning', () => {
       cy.get('input[placeholder="password"]').type('pass123')
       cy.get('input[placeholder="confirm password"]').type('different')
@@ -105,8 +117,8 @@ describe('Authentication', () => {
 
     it('shows error on password mismatch submit', () => {
       cy.get('input[placeholder="username"]').type('user1')
-      cy.get('input[placeholder="password"]').type('pass123')
-      cy.get('input[placeholder="confirm password"]').type('different')
+      cy.get('input[placeholder="password"]').type('password123')
+      cy.get('input[placeholder="confirm password"]').type('different123')
       cy.contains('button', 'register').click()
       cy.contains('passwords do not match')
     })
@@ -118,8 +130,8 @@ describe('Authentication', () => {
       }).as('register')
 
       cy.get('input[placeholder="username"]').type('newuser')
-      cy.get('input[placeholder="password"]').type('pass123')
-      cy.get('input[placeholder="confirm password"]').type('pass123')
+      cy.get('input[placeholder="password"]').type('password123')
+      cy.get('input[placeholder="confirm password"]').type('password123')
       cy.contains('button', 'register').click()
 
       cy.wait('@register')
@@ -133,8 +145,8 @@ describe('Authentication', () => {
       }).as('registerConflict')
 
       cy.get('input[placeholder="username"]').type('existinguser')
-      cy.get('input[placeholder="password"]').type('pass123')
-      cy.get('input[placeholder="confirm password"]').type('pass123')
+      cy.get('input[placeholder="password"]').type('password123')
+      cy.get('input[placeholder="confirm password"]').type('password123')
       cy.contains('button', 'register').click()
 
       cy.wait('@registerConflict')
@@ -148,8 +160,8 @@ describe('Authentication', () => {
       }).as('registerBadRequest')
 
       cy.get('input[placeholder="username"]').type('u')
-      cy.get('input[placeholder="password"]').type('p')
-      cy.get('input[placeholder="confirm password"]').type('p')
+      cy.get('input[placeholder="password"]').type('password123')
+      cy.get('input[placeholder="confirm password"]').type('password123')
       cy.contains('button', 'register').click()
 
       cy.wait('@registerBadRequest')

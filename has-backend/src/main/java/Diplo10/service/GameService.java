@@ -47,26 +47,34 @@ public class GameService {
         gameRepository.save(game);
     }
 
+    /**
+     * Starts a game, all or nothing: a game is only fair if every team has a
+     * container, so any failure tears down what was already created and leaves
+     * the game in its lobby state rather than running and unplayable.
+     */
     @Transactional
     public Game startGame(Game game) {
-        game.setStarted_at(LocalDateTime.now());
-        game = gameRepository.save(game);
-
         // Create one shared network for the entire game
         String networkId = networkService.createIsolatedNetwork(game.getName());
 
         // Start a container for each team
-        for (Team team : game.getTeam_list()) {
-            try {
+        try {
+            for (Team team : game.getTeam_list()) {
                 orchestrationService.setupTeamContainer(game, team, networkId);
                 // Ensure all team members have a VPN config assigned
                 for (Player p : team.getTeam_members()) {
                     vpnService.ensureVpnConfig(p);
                 }
-            } catch (Exception e) {
-                System.err.println("Failed to start container for team " + team.getName() + ": " + e.getMessage());
             }
+        } catch (Exception e) {
+            System.err.println("Failed to start game " + game.getName() + ": " + e.getMessage());
+            orchestrationService.terminateGame(game);
+            throw new IllegalStateException(
+                    "Could not start the game: " + e.getMessage() + ". No teams were started.");
         }
+
+        game.setStarted_at(LocalDateTime.now());
+        game = gameRepository.save(game);
 
         // Attach WireGuard to the network
         vpnService.includeNetwork(networkId);
@@ -114,9 +122,10 @@ public class GameService {
             }
         }
 
-        // Also remove creator reference if this user is the creator
+        // Hand the game over if the creator is the one leaving: start and stop
+        // are creator-only, so a creator-less game could never be run again
         if (game.getCreated_by() != null && game.getCreated_by().getPlayer().equals(username)) {
-            game.setCreated_by(null);
+            game.setCreated_by(remainingPlayer(game, username));
             gameRepository.save(game);
         }
 
@@ -125,11 +134,28 @@ public class GameService {
                 .anyMatch(t -> !t.getTeam_members().isEmpty());
 
         if (!anyPlayersLeft) {
-            // No players left — delete the game and its teams
+            // Nobody is left to play it. Tear down the running containers and
+            // network first, or they would keep running with nothing
+            // referencing them.
+            if (game.getStarted_at() != null && game.getFinished_at() == null) {
+                orchestrationService.terminateGame(game);
+            }
             gameRepository.delete(game);
             return true; // game deleted
         }
 
         return false; // game still exists
+    }
+
+    /**
+     * Any player still in the game other than the one leaving, or null when
+     * nobody remains.
+     */
+    private Player remainingPlayer(Game game, String leaving) {
+        return game.getTeam_list().stream()
+                .flatMap(team -> team.getTeam_members().stream())
+                .filter(member -> !member.getPlayer().equals(leaving))
+                .findFirst()
+                .orElse(null);
     }
 }

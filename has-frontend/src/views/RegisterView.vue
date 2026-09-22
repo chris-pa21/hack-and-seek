@@ -6,6 +6,8 @@ import { userAuthStore } from '@/stores/auth'
 const router = useRouter()
 const authStore = userAuthStore() // ✅ Anderer Name!
 
+const MIN_PASSWORD_LENGTH = 8
+
 const username = ref('')
 const password = ref('')
 const confirmPassword = ref('')
@@ -19,6 +21,12 @@ const register = async () => {
 
   if (!username.value || !password.value || !confirmPassword.value) {
     error.value = 'Please fill in all fields'
+    loading.value = false
+    return
+  }
+
+  if (password.value.length < MIN_PASSWORD_LENGTH) {
+    error.value = `Password must be at least ${MIN_PASSWORD_LENGTH} characters`
     loading.value = false
     return
   }
@@ -44,7 +52,8 @@ const register = async () => {
     }
   } catch (err) {
     if (err.response?.status === 400) {
-      error.value = 'Invalid input data'
+      error.value =
+        typeof err.response.data === 'string' ? err.response.data : 'Invalid input data'
     } else if (err.response?.status === 409) {
       error.value = 'User already exists'
     } else {

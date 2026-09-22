@@ -20,6 +20,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
 
+    static final int MIN_PASSWORD_LENGTH = 8;
+
     private final PlayerRepository playerRepository;
     private final PasswordEncoder passwordEncoder;
     private final VpnService vpnService;
@@ -30,6 +32,11 @@ public class AuthController {
         if (req.username == null || req.username.isBlank() ||
                 req.password == null || req.password.isBlank()) {
             return ResponseEntity.badRequest().body("player and password required");
+        }
+
+        if (req.password.length() < MIN_PASSWORD_LENGTH) {
+            return ResponseEntity.badRequest()
+                    .body("password must be at least " + MIN_PASSWORD_LENGTH + " characters");
         }
 
         if(!req.password.equals(req.confirmPassword)) {

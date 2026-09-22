@@ -39,8 +39,11 @@ const sendFriendRequest = async () => {
   isSending.value = true
 
   try {
-    await FriendService.addFriend(foundUser.value.username)
-    successMessage.value = 'Friend request sent successfully.'
+    const response = await FriendService.addFriend(foundUser.value.username)
+    successMessage.value =
+      response.data?.status === 'FRIENDSHIP_CREATED'
+        ? `You are now friends with ${foundUser.value.username}.`
+        : 'Friend request sent successfully.'
     sendRequestButton.value = false
   } catch (error) {
     if (error.response) {

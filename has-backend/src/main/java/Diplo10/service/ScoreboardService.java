@@ -1,53 +1,54 @@
 package Diplo10.service;
 
 import Diplo10.entity.Player;
+import Diplo10.exception.NotFoundException;
 import Diplo10.repository.PlayerRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ScoreboardService {
-    private final FriendService friendService;
+
+    private static final int BOARD_SIZE = 10;
+
     private final PlayerRepository playerRepository;
 
-    public ScoreboardService(FriendService friendService, PlayerRepository playerRepository) {
-        this.friendService = friendService;
+    public ScoreboardService(PlayerRepository playerRepository) {
         this.playerRepository = playerRepository;
     }
 
+    /**
+     * The player's top friends by points, with the player themselves always on
+     * the board. If they rank below the last friend, they take the final slot
+     * rather than dropping off their own scoreboard.
+     */
     public List<Player> getScoreboard(String name) {
         Player user = playerRepository.findByPlayer(name)
-                .orElseThrow(() -> new RuntimeException("Player not found: " + name));
+                .orElseThrow(() -> new NotFoundException("Player not found: " + name));
 
-        List<Player> topFriends = playerRepository
-                .findTopFriendsByPoints(name, PageRequest.of(0, 10));
+        List<Player> board = new ArrayList<>(
+                playerRepository.findTopFriendsByPoints(name, PageRequest.of(0, BOARD_SIZE)));
+        board.add(user);
+        board.sort(Comparator.comparingInt(ScoreboardService::pointsOf).reversed());
 
-        int userPoints = Optional.ofNullable(user.getPoints()).orElse(0);
-
-        // Case 1: fewer than 10 friends
-        if (topFriends.size() < 10) {
-            topFriends.add(user);
-        } else {
-            int lastFriendPoints = Optional.ofNullable(
-                    topFriends.get(topFriends.size() - 1).getPoints()
-            ).orElse(0);
-
-            // If user does not beat the 10th friend, just return the friends
-            if (userPoints <= lastFriendPoints) {
-                return topFriends;
-            }
-
-            // User beats at least the 10th friend, include them
-            topFriends.add(user);
+        if (board.size() <= BOARD_SIZE) {
+            return board;
         }
 
-        // Sort and keep at most 10
-        topFriends.sort(Comparator.comparingInt(
-                (Player p) -> Optional.ofNullable(p.getPoints()).orElse(0)
-        ).reversed());
+        List<Player> top = new ArrayList<>(board.subList(0, BOARD_SIZE));
+        boolean userOnBoard = top.stream().anyMatch(p -> p.getPlayer().equals(name));
+        if (!userOnBoard) {
+            top.set(BOARD_SIZE - 1, user);
+        }
+        return top;
+    }
 
-        return topFriends.size() > 10 ? topFriends.subList(0, 10) : topFriends;
+    private static int pointsOf(Player player) {
+        return Optional.ofNullable(player.getPoints()).orElse(0);
     }
 }

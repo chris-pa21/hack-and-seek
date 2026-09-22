@@ -28,10 +28,19 @@ public class FriendController {
 
     public record CreateFriendRequest(String requester, String receiver) {}
 
+    /**
+     * status is REQUEST_SENT (201, request pending) or FRIENDSHIP_CREATED
+     * (200, the receiver had already asked, so both are now friends).
+     */
+    public record CreateFriendResponse(String status, Friendrequest request) {}
+
     @PostMapping
-    public ResponseEntity<Friendrequest> createFriendRequest(@RequestBody CreateFriendRequest request) {
-        Friendrequest saved = friendrequestService.sendRequest(request.requester(), request.receiver());
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    public ResponseEntity<CreateFriendResponse> createFriendRequest(@RequestBody CreateFriendRequest request) {
+        return friendrequestService.sendRequest(request.requester(), request.receiver())
+                .map(saved -> ResponseEntity.status(HttpStatus.CREATED)
+                        .body(new CreateFriendResponse("REQUEST_SENT", saved)))
+                .orElseGet(() -> ResponseEntity.ok(
+                        new CreateFriendResponse("FRIENDSHIP_CREATED", null)));
     }
 
 

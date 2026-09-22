@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -242,6 +243,23 @@ class GameControllerTest {
                 .andExpect(status().isForbidden());
 
         verify(containerRepository, never()).findByTeam(any());
+    }
+
+    // ── adding a team ───────────────────────────────────────────────────
+
+    @Test
+    @WithMockUser(username = "alice")
+    @DisplayName("a team added to a game is bound to that game's id")
+    void addedTeamKnowsItsGame() throws Exception {
+        mockMvc.perform(post("/api/games/{id}/team", GAME_ID).with(csrf()).param("name", "charlie"))
+                .andExpect(status().isOk());
+
+        org.mockito.ArgumentCaptor<Team> team = org.mockito.ArgumentCaptor.forClass(Team.class);
+        verify(gameService).addTeam(team.capture(), org.mockito.ArgumentMatchers.eq(GAME_ID));
+
+        // with gameId left at 0, findByGameIdAndName could never find this team
+        assertThat(team.getValue().getName()).isEqualTo("charlie");
+        assertThat(team.getValue().getGameId()).isEqualTo((int) GAME_ID);
     }
 
     // ── defeat log ──────────────────────────────────────────────────────

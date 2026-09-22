@@ -83,7 +83,7 @@ public class GameController {
 
     @PostMapping("/{id}/team")
     public ResponseEntity<Void> createTeam(@PathVariable Long id, @RequestParam String name) {
-        Team team = new Team(name);
+        Team team = new Team(name, Math.toIntExact(id));
         this.gameService.addTeam(team, id);
         return ResponseEntity.ok().build();
     }

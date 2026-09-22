@@ -34,10 +34,14 @@ public class Team {
     @ManyToMany
     private List<Player> team_members;
 
-    public Team(String name) {
+    public Team(String name, int gameId) {
         this.name = name;
         this.gameId = gameId;
         this.team_members = new ArrayList<>();
+    }
+
+    public Team(String name) {
+        this(name, 0);
     }
 
     public void addPlayer(Player player){

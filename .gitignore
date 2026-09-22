@@ -11,3 +11,6 @@ privatekey-*
 presharedkey-*
 publickey-*
 *-wg.conf
+
+# Python bytecode from running the VPN manager tests
+__pycache__/

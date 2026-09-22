@@ -1,9 +1,31 @@
 from flask import Flask, request, jsonify
-import subprocess
+import hmac
 import ipaddress
+import os
+import subprocess
 import sys
 
 app = Flask(__name__)
+
+# Shared secret with the backend, the only legitimate caller. Challenge
+# containers can reach this port over the game networks, so every request
+# must prove it comes from the backend.
+TOKEN = os.environ.get("VPN_MANAGER_TOKEN", "")
+
+def is_placeholder(value):
+    """True for a value still in env-example form, such as "[TOKEN]"."""
+    value = value.strip()
+    return value.startswith("[") and value.endswith("]")
+
+# an unreplaced placeholder is public knowledge, so treat it as no token at all
+if is_placeholder(TOKEN):
+    TOKEN = ""
+
+# Players get addresses from the WireGuard subnet; the server itself holds the
+# first one. Game networks are /24s that NetworkService allocates in 10.200.x.
+VPN_SUBNET = ipaddress.IPv4Network(os.environ.get("INTERNAL_SUBNET", "10.8.19.0/24"))
+VPN_SERVER_IP = VPN_SUBNET.network_address + 1
+GAME_RANGE = ipaddress.IPv4Network("10.200.0.0/16")
 
 def run_cmd(args):
     """Runs a command safely using a list of arguments."""
@@ -17,6 +39,11 @@ def run_cmd(args):
         print(f"Exception while running command: {e}", file=sys.stderr)
         return False
 
+def ensure_rule(chain, rule):
+    """Appends an iptables rule unless it is already there, so restarts don't pile up duplicates."""
+    if not run_cmd(["iptables", "-C", chain] + rule):
+        run_cmd(["iptables", "-A", chain] + rule)
+
 def init_firewall():
     """Sets up the 'Default Deny' state for the VPN traffic."""
     print("Initializing: Setting up isolated forward policy...")
@@ -24,99 +51,88 @@ def init_firewall():
     run_cmd(["iptables", "-P", "FORWARD", "DROP"])
     run_cmd(["iptables", "-A", "FORWARD", "-m", "conntrack", "--ctstate", "ESTABLISHED,RELATED", "-j", "ACCEPT"])
     # Masquerade VPN traffic going into Docker networks so containers can route replies back
-    run_cmd(["iptables", "-t", "nat", "-A", "POSTROUTING", "-s", "10.8.19.0/24", "!", "-o", "wg0", "-j", "MASQUERADE"])
+    ensure_rule("POSTROUTING", ["-t", "nat", "-s", str(VPN_SUBNET), "!", "-o", "wg0", "-j", "MASQUERADE"])
+    # VPN clients have no business with this API: drop it on the tunnel interface
+    ensure_rule("INPUT", ["-i", "wg0", "-p", "tcp", "--dport", "9999", "-j", "DROP"])
 
-def validate_subnet(subnet):
-    """Validates that the input is a valid CIDR subnet."""
+def parse_player_ip(value):
+    """A single player address inside the VPN subnet, or None. Ranges like 0.0.0.0/0 are rejected."""
+    if not isinstance(value, str):
+        return None
     try:
-        ipaddress.IPv4Network(subnet)
-        return True
+        ip = ipaddress.IPv4Address(value)
     except ValueError:
-        return False
+        return None
+    if ip not in VPN_SUBNET or ip in (VPN_SUBNET.network_address, VPN_SUBNET.broadcast_address, VPN_SERVER_IP):
+        return None
+    return ip
+
+def parse_game_subnet(value):
+    """A /24 game network inside 10.200.0.0/16, or None."""
+    if not isinstance(value, str):
+        return None
+    try:
+        subnet = ipaddress.IPv4Network(value)
+    except ValueError:
+        return None
+    if subnet.prefixlen != 24 or not subnet.subnet_of(GAME_RANGE):
+        return None
+    return subnet
+
+@app.before_request
+def require_token():
+    if request.path == "/health":
+        return None
+    supplied = request.headers.get("X-Manager-Token", "")
+    # an unset TOKEN never matches, so a misconfigured manager fails closed
+    if not TOKEN or not hmac.compare_digest(supplied.encode(), TOKEN.encode()):
+        return jsonify({"error": "unauthorized"}), 401
+    return None
+
+def player_rule_args():
+    """Validated (player_ip, subnet) strings from the request body, or None."""
+    data = request.get_json(silent=True) or {}
+    player_ip = parse_player_ip(data.get('playerIp'))
+    subnet = parse_game_subnet(data.get('subnet'))
+    if player_ip is None or subnet is None:
+        return None
+    return str(player_ip), str(subnet)
 
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({"status": "ok"}), 200
 
-@app.route('/api/game', methods=['POST'])
-def add_game_network():
-    data = request.get_json()
-    subnet = data.get('subnet')
-    if not subnet or not validate_subnet(subnet):
-        return jsonify({"error": "Invalid or missing subnet"}), 400
-    if run_cmd(["iptables", "-A", "FORWARD", "-s", subnet, "-d", subnet, "-j", "ACCEPT"]):
-        return jsonify({"status": "active", "subnet": subnet}), 200
-    
-    return jsonify({"error": "Failed to apply firewall rule"}), 500
-
-@app.route('/api/game', methods=['DELETE'])
-def delete_game_network():
-    data = request.get_json()
-    subnet = data.get('subnet')
-    if not subnet or not validate_subnet(subnet):
-        return jsonify({"error": "Invalid or missing subnet"}), 400
-    if run_cmd(["iptables", "-D", "FORWARD", "-s", subnet, "-d", subnet, "-j", "ACCEPT"]):
-        return jsonify({
-            "status": "deleted", 
-            "message": f"Isolation rule for {subnet} removed."
-        }), 200
-    
-    return jsonify({"error": "Rule not found or could not be deleted"}), 404
-
-@app.route('/api/game', methods=['GET'])
-def get_game_networks():
-    """Returns a list of current FORWARD rules to verify what is active."""
-    try:
-        result = subprocess.run(["iptables", "-L", "FORWARD", "-n"], capture_output=True, text=True)
-        return jsonify({"rules": result.stdout.splitlines()}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/vpn/bridge', methods=['POST'])
-def setup_vpn_bridge():
-    data = request.get_json()
-    vpn_subnet = data.get('vpnSubnet')
-    if not vpn_subnet or not validate_subnet(vpn_subnet):
-        return jsonify({"error": "Invalid or missing vpnSubnet"}), 400
-    
-    # We no longer add global ACCEPT rules here.
-    # Traffic is now strictly controlled per-player via add_player_to_game.
-    
-    return jsonify({"status": "active", "vpnSubnet": vpn_subnet}), 200
-
 @app.route('/api/game/player', methods=['POST'])
 def add_player_to_game():
-    data = request.get_json()
-    player_ip = data.get('playerIp')
-    subnet = data.get('subnet')
-    
-    if not player_ip or not subnet or not validate_subnet(subnet):
+    args = player_rule_args()
+    if args is None:
         return jsonify({"error": "Invalid playerIp or subnet"}), 400
-        
+    player_ip, subnet = args
+
     # Allow specific player to reach game subnet and vice-versa
     success = True
     success &= run_cmd(["iptables", "-A", "FORWARD", "-s", player_ip, "-d", subnet, "-j", "ACCEPT"])
     success &= run_cmd(["iptables", "-A", "FORWARD", "-s", subnet, "-d", player_ip, "-j", "ACCEPT"])
-    
+
     if success:
         return jsonify({"status": "active", "playerIp": player_ip, "subnet": subnet}), 200
     return jsonify({"error": "Failed to apply player rules"}), 500
 
 @app.route('/api/game/player', methods=['DELETE'])
 def remove_player_from_game():
-    data = request.get_json()
-    player_ip = data.get('playerIp')
-    subnet = data.get('subnet')
-    
-    if not player_ip or not subnet or not validate_subnet(subnet):
+    args = player_rule_args()
+    if args is None:
         return jsonify({"error": "Invalid playerIp or subnet"}), 400
-        
+    player_ip, subnet = args
+
     run_cmd(["iptables", "-D", "FORWARD", "-s", player_ip, "-d", subnet, "-j", "ACCEPT"])
     run_cmd(["iptables", "-D", "FORWARD", "-s", subnet, "-d", player_ip, "-j", "ACCEPT"])
-    
+
     return jsonify({"status": "deleted"}), 200
 
 if __name__ == '__main__':
+    if not TOKEN:
+        sys.exit("VPN_MANAGER_TOKEN is not set or still the env-example placeholder"
+                 " - refusing to start an unauthenticated firewall API")
     init_firewall()
-    # Running on 9999 as per your previous setup
     app.run(host='0.0.0.0', port=9999)

@@ -91,29 +91,29 @@ const handleCreateGame = async (gameData) => {
             <span
               :class="[
                 'text-[10px] font-semibold px-1.5 py-0.5 rounded border shrink-0',
-                game.finished_at
+                game.finishedAt
                   ? 'bg-[#9333EA]/10 border-[#9333EA]/30 text-[#9333EA]'
-                  : game.started_at
+                  : game.startedAt
                     ? 'bg-[#00C853]/10 border-[#00C853]/30 text-[#00C853]'
                     : 'bg-[#FCD34D]/10 border-[#FCD34D]/30 text-[#FCD34D]'
               ]"
             >
-              {{ game.finished_at ? 'Finished' : game.started_at ? 'Running' : 'Pending' }}
+              {{ game.finishedAt ? 'Finished' : game.startedAt ? 'Running' : 'Pending' }}
             </span>
           </div>
           <span class="text-xs text-gray-500 ml-2 shrink-0">
-            {{ game.team_list?.length ?? 0 }} team{{ (game.team_list?.length ?? 0) !== 1 ? 's' : '' }}
+            {{ game.teams?.length ?? 0 }} team{{ (game.teams?.length ?? 0) !== 1 ? 's' : '' }}
           </span>
         </div>
-        <div v-if="game.finished_at && game.winnerTeam" class="mt-1 text-xs text-[#FCD34D] font-semibold">
-          &#127942; Winner: {{ game.winnerTeam.name.split('_game')[0] }}
+        <div v-if="game.finishedAt && game.winnerTeam" class="mt-1 text-xs text-[#FCD34D] font-semibold">
+          &#127942; Winner: {{ game.winnerTeam.split('_game')[0] }}
         </div>
-        <div v-else-if="game.finished_at && !game.winnerTeam" class="mt-1 text-xs text-[#9333EA] font-semibold">
+        <div v-else-if="game.finishedAt && !game.winnerTeam" class="mt-1 text-xs text-[#9333EA] font-semibold">
           &#127942; Draw
         </div>
         <div v-else class="flex flex-wrap gap-1 mt-1">
           <span
-            v-for="team in game.team_list"
+            v-for="team in game.teams"
             :key="team.name"
             class="bg-[#1F2937] text-[#00C853] text-xs px-2 py-0.5 rounded-md border border-[#00C853]/30"
           >

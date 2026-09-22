@@ -26,10 +26,6 @@ export default {
         return axios.get('/api/games/challenges')
     },
 
-    getContainers(gameId) {
-        return axios.get(`/api/orchestration/session/game/${gameId}`)
-    },
-
     submitFlag(gameId, flag) {
         return axios.post(`/api/games/${gameId}/submit-flag`, { flag })
     },

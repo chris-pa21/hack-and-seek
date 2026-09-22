@@ -74,10 +74,10 @@ describe('Dashboard', () => {
           {
             id: 1,
             name: 'Test Game',
-            started_at: null,
-            team_list: [
-              { name: 'Alpha_game1', challenge: 'web-easy', team_members: [] },
-              { name: 'Beta_game1', challenge: 'crypto-medium', team_members: [] },
+            startedAt: null,
+            teams: [
+              { name: 'Alpha_game1', challenge: 'web-easy', members: [] },
+              { name: 'Beta_game1', challenge: 'crypto-medium', members: [] },
             ],
           },
         ],
@@ -100,8 +100,8 @@ describe('Dashboard', () => {
           {
             id: 2,
             name: 'Running Match',
-            started_at: '2025-01-01T12:00:00',
-            team_list: [],
+            startedAt: '2025-01-01T12:00:00',
+            teams: [],
           },
         ],
       }).as('getGamesRunning')
@@ -117,13 +117,13 @@ describe('Dashboard', () => {
       cy.intercept('GET', '/api/games', {
         statusCode: 200,
         body: [
-          { id: 42, name: 'Click Me', started_at: null, team_list: [] },
+          { id: 42, name: 'Click Me', startedAt: null, teams: [] },
         ],
       }).as('getGamesClick')
 
       cy.intercept('GET', '/api/games/42', {
         statusCode: 200,
-        body: { id: 42, name: 'Click Me', started_at: null, team_list: [] },
+        body: { id: 42, name: 'Click Me', startedAt: null, teams: [] },
       }).as('getGame42')
 
       cy.visit('/dashboard')
@@ -141,8 +141,8 @@ describe('Dashboard', () => {
       cy.intercept('GET', '/api/friend/friends*', {
         statusCode: 200,
         body: [
-          { player: 'alice', points: 500 },
-          { player: 'bob', points: 300 },
+          { username: 'alice', points: 500 },
+          { username: 'bob', points: 300 },
         ],
       }).as('getFriendsForModal')
     })
@@ -189,7 +189,7 @@ describe('Dashboard', () => {
 
       cy.intercept('GET', '/api/games', {
         statusCode: 200,
-        body: [{ id: 99, name: 'New Game', started_at: null, team_list: [] }],
+        body: [{ id: 99, name: 'New Game', startedAt: null, teams: [] }],
       }).as('getGamesAfterCreate')
 
       cy.contains('button', '+ Create Game').click()
@@ -349,8 +349,8 @@ describe('Dashboard', () => {
       cy.intercept('GET', '/api/friend/friends*', {
         statusCode: 200,
         body: [
-          { player: 'alice', points: 500 },
-          { player: 'bob', points: 300 },
+          { username: 'alice', points: 500 },
+          { username: 'bob', points: 300 },
         ],
       }).as('getFriendsList')
 
@@ -365,7 +365,7 @@ describe('Dashboard', () => {
     it('deletes a friend', () => {
       cy.intercept('GET', '/api/friend/friends*', {
         statusCode: 200,
-        body: [{ player: 'alice', points: 500 }],
+        body: [{ username: 'alice', points: 500 }],
       }).as('getFriendsList')
 
       cy.intercept('DELETE', '/api/friend*', {

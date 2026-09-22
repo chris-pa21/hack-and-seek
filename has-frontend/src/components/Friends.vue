@@ -53,16 +53,16 @@ onMounted(() => {
     <div class="w-full overflow-y-auto flex flex-col gap-y-4">
       <div
         v-for="friend in friends"
-        :key="friend.player"
+        :key="friend.username"
         class="flex items-center gap-x-4 px-4 py-2 border-b border-gray-700 w-full"
       >
-        <span class="font-black text-[#E0E6F0] text-lg w-32 truncate">{{ friend.player }}</span>
+        <span class="font-black text-[#E0E6F0] text-lg w-32 truncate">{{ friend.username }}</span>
         <span class="hidden md:block text-[#9CA3AF] text-base w-20 text-right">
           {{ friend.points }}
         </span>
         <div class="flex items-center gap-x-2 ml-auto">
           <button
-            @click="deleteFriend(friend.player)"
+            @click="deleteFriend(friend.username)"
             class="danger-button-sm"
           >
             &#10005;

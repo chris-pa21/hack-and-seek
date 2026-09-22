@@ -2,22 +2,22 @@ describe('Game Detail Page', () => {
   const pendingGame = {
     id: 1,
     name: 'Test Game',
-    started_at: null,
-    created_by: { player: 'testuser' },
-    team_list: [
+    startedAt: null,
+    createdBy: 'testuser',
+    teams: [
       {
         name: 'Alpha_game1',
         challenge: 'web-easy',
         score: 0,
         defeated: false,
-        team_members: [{ player: 'testuser' }, { player: 'alice' }],
+        members: [{ username: 'testuser' }, { username: 'alice' }],
       },
       {
         name: 'Beta_game1',
         challenge: 'crypto-medium',
         score: 0,
         defeated: false,
-        team_members: [{ player: 'bob' }],
+        members: [{ username: 'bob' }],
       },
     ],
   }
@@ -25,22 +25,24 @@ describe('Game Detail Page', () => {
   const runningGame = {
     id: 1,
     name: 'Live Game',
-    started_at: '2025-01-01T12:00:00',
-    created_by: { player: 'testuser' },
-    team_list: [
+    startedAt: '2025-01-01T12:00:00',
+    createdBy: 'testuser',
+    teams: [
       {
         name: 'Alpha_game1',
         challenge: 'web-easy',
         score: 150,
         defeated: false,
-        team_members: [{ player: 'testuser' }, { player: 'alice' }],
+        ipAddress: '10.8.19.2',
+        members: [{ username: 'testuser' }, { username: 'alice' }],
       },
       {
         name: 'Beta_game1',
         challenge: 'crypto-medium',
         score: 75,
         defeated: false,
-        team_members: [{ player: 'bob' }],
+        ipAddress: '10.8.19.3',
+        members: [{ username: 'bob' }],
       },
     ],
   }
@@ -59,14 +61,6 @@ describe('Game Detail Page', () => {
         { name: 'pwn-hard', difficulty: 3 },
       ],
     }).as('getChallenges')
-
-    cy.intercept('GET', `/api/orchestration/session/game/${game.id}`, {
-      statusCode: 200,
-      body: [
-        { team: { name: 'Alpha_game1' }, ipAddress: '10.8.19.2' },
-        { team: { name: 'Beta_game1' }, ipAddress: '10.8.19.3' },
-      ],
-    }).as('getContainers')
 
     cy.intercept('GET', `/api/games/${game.id}/defeat-log`, {
       statusCode: 200,
@@ -121,7 +115,7 @@ describe('Game Detail Page', () => {
     it('does not show Start Game button for non-creators', () => {
       const otherUserGame = {
         ...pendingGame,
-        created_by: { player: 'someone_else' },
+        createdBy: 'someone_else',
       }
       cy.intercept('GET', '/api/games/1', {
         statusCode: 200,
@@ -278,7 +272,7 @@ describe('Game Detail Page', () => {
     it('shows defeated state when team is defeated', () => {
       const defeatedGame = {
         ...runningGame,
-        team_list: runningGame.team_list.map((t) =>
+        teams: runningGame.teams.map((t) =>
           t.name === 'Alpha_game1' ? { ...t, defeated: true } : t,
         ),
       }

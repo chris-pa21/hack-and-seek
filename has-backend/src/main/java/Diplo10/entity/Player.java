@@ -18,16 +18,24 @@ public class Player {
     @EqualsAndHashCode.Include
     private String player;
 
+    // Controllers answer with DTOs (see Diplo10.dto). These annotations are a
+    // second line of defence: should a Player ever be serialized by accident,
+    // its credentials and VPN data still stay out of the JSON.
+    @JsonIgnore
     private String password;
 
     private Integer points;
 
+    @JsonIgnore
     private String vpnIp;
 
+    @JsonIgnore
     private String vpnPrivateKey;
 
+    @JsonIgnore
     private String vpnPublicKey;
 
+    @JsonIgnore
     private String vpnServerPublicKey;
 
     @ManyToMany

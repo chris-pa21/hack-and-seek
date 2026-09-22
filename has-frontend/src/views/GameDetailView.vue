@@ -17,7 +17,6 @@ const flagInput = ref('')
 const flagMessage = ref('')
 const flagError = ref(false)
 const challenges = ref([])
-const containerMap = ref({})
 const defeatLog = ref([])
 const credentials = ref(null)
 const copiedPassword = ref(false)
@@ -44,15 +43,15 @@ const currentUsername = computed(() => {
 })
 
 const isCreator = computed(() => {
-  return game.value?.created_by?.player === currentUsername.value
+  return game.value?.createdBy === currentUsername.value
 })
 
 const isStarted = computed(() => {
-  return game.value?.started_at != null
+  return game.value?.startedAt != null
 })
 
 const isFinished = computed(() => {
-  return game.value?.finished_at != null
+  return game.value?.finishedAt != null
 })
 
 const winnerTeam = computed(() => {
@@ -60,11 +59,11 @@ const winnerTeam = computed(() => {
 })
 
 const teams = computed(() => {
-  return game.value?.team_list ?? []
+  return game.value?.teams ?? []
 })
 
 const myTeam = computed(() => {
-  return teams.value.find((t) => t.team_members?.some((m) => m.player === currentUsername.value))
+  return teams.value.find((t) => t.members?.some((m) => m.username === currentUsername.value))
 })
 
 const isDefeated = computed(() => {
@@ -107,28 +106,12 @@ const copyPassword = () => {
   }
 }
 
-const fetchContainers = async () => {
-  try {
-    const res = await GameService.getContainers(gameId)
-    const map = {}
-    for (const c of res.data) {
-      if (c.team?.name) {
-        map[c.team.name] = c.ipAddress
-      }
-    }
-    containerMap.value = map
-  } catch (e) {
-    console.error('Failed to fetch containers:', e)
-  }
-}
-
 const fetchGame = async (silent = false) => {
   if (!silent) isLoading.value = true
   try {
     const response = await GameService.getGame(gameId)
     game.value = response.data
-    if (response.data?.started_at) {
-      await fetchContainers()
+    if (response.data?.startedAt) {
       await fetchCredentials()
       await fetchDefeatLog()
     }
@@ -145,7 +128,6 @@ const startGame = async () => {
   try {
     const response = await GameService.startGame(gameId)
     game.value = response.data
-    await fetchContainers()
     await fetchCredentials()
   } catch (error) {
     console.error('Failed to start game:', error)
@@ -317,14 +299,14 @@ onUnmounted(() => {
               </div>
               <div class="flex flex-wrap gap-2">
                 <span
-                  v-for="member in team.team_members"
-                  :key="member.player"
+                  v-for="member in team.members"
+                  :key="member.username"
                   class="bg-[#0F172A] text-[#E0E6F0] text-xs px-3 py-1 rounded-md border border-gray-700"
                 >
-                  {{ member.player }}
+                  {{ member.username }}
                 </span>
                 <span
-                  v-if="!team.team_members || team.team_members.length === 0"
+                  v-if="!team.members || team.members.length === 0"
                   class="text-xs text-gray-600 italic"
                 >
                   No players
@@ -362,7 +344,7 @@ onUnmounted(() => {
             <div class="text-5xl">&#127942;</div>
             <h2 class="text-3xl font-bold text-[#FCD34D]">Game Over</h2>
             <p v-if="winnerTeam" class="text-lg text-[#E0E6F0]">
-              <span class="font-bold text-[#00C853]">{{ displayTeamName(winnerTeam?.name) }}</span>
+              <span class="font-bold text-[#00C853]">{{ displayTeamName(winnerTeam) }}</span>
               wins!
             </p>
             <p v-else class="text-lg text-[#E0E6F0]">
@@ -504,7 +486,7 @@ onUnmounted(() => {
                 'col-span-3 font-mono text-sm',
                 team.name === myTeam?.name ? 'text-[#E0E6F0]' : 'text-gray-400',
               ]"
-              >{{ containerMap[team.name] || '—' }}</span
+              >{{ team.ipAddress || '—' }}</span
             >
             <span
               class="col-span-2 text-sm font-semibold"

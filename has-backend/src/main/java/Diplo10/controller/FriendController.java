@@ -1,5 +1,6 @@
 package Diplo10.controller;
 
+import Diplo10.dto.PlayerSummary;
 import Diplo10.entity.Friendrequest;
 import Diplo10.entity.Player;
 import Diplo10.service.FriendService;
@@ -79,8 +80,10 @@ public class FriendController {
 
 
     @GetMapping("/friends")
-    public ResponseEntity<List<Player>> getFriends(@RequestParam String username) {
-        List<Player> friends = new ArrayList<>(friendService.getFriends(username));
+    public ResponseEntity<List<PlayerSummary>> getFriends(@RequestParam String username) {
+        List<PlayerSummary> friends = friendService.getFriends(username).stream()
+                .map(PlayerSummary::from)
+                .toList();
         return ResponseEntity.ok(friends);
     }
 

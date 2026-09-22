@@ -24,8 +24,8 @@ const loadPlayers = async () => {
     const username = user?.username ?? user?.player ?? null
 
     // Add the creator if not already in the friends list
-    if (username && !friends.some(f => f.player === username)) {
-      friends.unshift({ player: username, points: null })
+    if (username && !friends.some(f => f.username === username)) {
+      friends.unshift({ username, points: null })
     }
 
     availablePlayers.value = friends
@@ -129,7 +129,7 @@ const allAssignedPlayers = computed(() => {
 
 // Filter to players not assigned to any team
 const getAvailableForTeam = () => {
-  return availablePlayers.value.filter(p => !allAssignedPlayers.value.includes(p.player))
+  return availablePlayers.value.filter(p => !allAssignedPlayers.value.includes(p.username))
 }
 
 </script>
@@ -239,8 +239,8 @@ const getAvailableForTeam = () => {
                     class="flex-grow bg-[#1F2937] border border-gray-600 rounded-lg px-3 py-1.5 text-xs text-gray-400 outline-none"
                  >
                     <option value="" disabled selected>Add player to team...</option>
-                    <option v-for="player in getAvailableForTeam()" :key="player.player" :value="player.player">
-                        {{ player.player }}{{ player.points != null ? ` (${player.points} pts)` : '' }}
+                    <option v-for="player in getAvailableForTeam()" :key="player.username" :value="player.username">
+                        {{ player.username }}{{ player.points != null ? ` (${player.points} pts)` : '' }}
                     </option>
                  </select>
               </div>

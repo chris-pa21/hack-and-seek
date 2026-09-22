@@ -1,6 +1,7 @@
 package Diplo10.controller;
 
 import Diplo10.exception.NotFoundException;
+import Diplo10.dto.ContainerView;
 import Diplo10.entity.ContainerEntity;
 import Diplo10.entity.Game;
 import Diplo10.entity.Team;
@@ -30,15 +31,19 @@ public class OrchestrationController {
     }
 
     @GetMapping("/session/all")
-    public ResponseEntity<List<ContainerEntity>> listAllActiveGames() {
-        return ResponseEntity.ok(containerRepository.findAll());
+    public ResponseEntity<List<ContainerView>> listAllActiveGames() {
+        return ResponseEntity.ok(views(containerRepository.findAll()));
     }
 
     @GetMapping("/session/game/{gameId}")
-    public ResponseEntity<List<ContainerEntity>> getContainersByGame(@PathVariable Long gameId) {
+    public ResponseEntity<List<ContainerView>> getContainersByGame(@PathVariable Long gameId) {
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new NotFoundException("Game not found"));
-        return ResponseEntity.ok(containerRepository.findByGame(game));
+        return ResponseEntity.ok(views(containerRepository.findByGame(game)));
+    }
+
+    private static List<ContainerView> views(List<ContainerEntity> containers) {
+        return containers.stream().map(ContainerView::from).toList();
     }
 
     @DeleteMapping("/stop/{gameId}")

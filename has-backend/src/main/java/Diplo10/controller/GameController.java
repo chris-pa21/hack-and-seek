@@ -3,8 +3,9 @@ package Diplo10.controller;
 import Diplo10.exception.NotFoundException;
 import Diplo10.dto.ChallengeDTO;
 import Diplo10.dto.DefeatLogEntry;
+import Diplo10.dto.GameView;
+import Diplo10.dto.TeamView;
 import Diplo10.entity.ContainerEntity;
-import Diplo10.entity.FlagSubmission;
 import Diplo10.entity.Game;
 import Diplo10.entity.Player;
 import Diplo10.entity.Team;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -47,7 +49,7 @@ public class GameController {
      * Full game creation: accepts a name + list of teams (each with players & challenge).
      */
     @PostMapping("/create")
-    public ResponseEntity<Game> createGame(@RequestBody CreateGameRequest req, Authentication authentication) {
+    public ResponseEntity<GameView> createGame(@RequestBody CreateGameRequest req, Authentication authentication) {
         // 1. Save the bare game first to get an ID
         Game game = new Game();
         game.setName(req.name());
@@ -78,7 +80,7 @@ public class GameController {
         }
 
         game = gameRepository.save(game);
-        return ResponseEntity.status(201).body(game);
+        return ResponseEntity.status(201).body(view(game));
     }
 
     @PostMapping("/{id}/team")
@@ -95,21 +97,26 @@ public class GameController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Game>> showGames(Authentication authentication) {
+    public ResponseEntity<List<GameView>> showGames(Authentication authentication) {
         String username = authentication.getName();
-        List<Game> games = this.gameRepository.findGamesByPlayer(username);
+        List<GameView> games = this.gameRepository.findGamesByPlayer(username).stream()
+                .map(this::view)
+                .toList();
         return ResponseEntity.ok(games);
     }
 
     @GetMapping("/{gameId}")
-    public ResponseEntity<Game> getGame(@PathVariable Long gameId) {
+    public ResponseEntity<GameView> getGame(@PathVariable Long gameId, Authentication authentication) {
         Game game = this.gameRepository.findById(gameId)
                 .orElseThrow(() -> new NotFoundException("Game not found"));
-        return ResponseEntity.ok(game);
+        if (!canView(game, authentication.getName())) {
+            return ResponseEntity.status(403).build();
+        }
+        return ResponseEntity.ok(view(game));
     }
 
     @PostMapping("/{gameId}/start")
-    public ResponseEntity<Game> startGame(@PathVariable Long gameId, Authentication authentication) {
+    public ResponseEntity<GameView> startGame(@PathVariable Long gameId, Authentication authentication) {
         Game game = this.gameRepository.findById(gameId)
                 .orElseThrow(() -> new NotFoundException("Game not found"));
         String username = authentication.getName();
@@ -123,11 +130,11 @@ public class GameController {
             return ResponseEntity.badRequest().build();
         }
         game = gameService.startGame(game);
-        return ResponseEntity.ok(game);
+        return ResponseEntity.ok(view(game));
     }
 
     @PostMapping("/{gameId}/stop")
-    public ResponseEntity<Game> stopGame(@PathVariable Long gameId, Authentication authentication) {
+    public ResponseEntity<GameView> stopGame(@PathVariable Long gameId, Authentication authentication) {
         Game game = this.gameRepository.findById(gameId)
                 .orElseThrow(() -> new NotFoundException("Game not found"));
         String username = authentication.getName();
@@ -149,19 +156,33 @@ public class GameController {
         Team winner = topTeams.size() == 1 ? topTeams.get(0) : null;
 
         gameService.endGame(game, winner);
-        return ResponseEntity.ok(game);
+        return ResponseEntity.ok(view(game));
     }
 
     @GetMapping("/{gameId}/teams")
-    public ResponseEntity<List<Team>> showTeams(@PathVariable Long gameId) {
-        List<Team> teams = this.teamRepository.findByGameId(Math.toIntExact(gameId));
+    public ResponseEntity<List<TeamView>> showTeams(@PathVariable Long gameId, Authentication authentication) {
+        Game game = this.gameRepository.findById(gameId)
+                .orElseThrow(() -> new NotFoundException("Game not found"));
+        if (!canView(game, authentication.getName())) {
+            return ResponseEntity.status(403).build();
+        }
+        List<TeamView> teams = this.teamRepository.findByGameId(Math.toIntExact(gameId)).stream()
+                .map(this::view)
+                .toList();
         return ResponseEntity.ok(teams);
     }
 
     @GetMapping("/{gameId}/teams/{teamId}")
-    public ResponseEntity<Team> showTeam(@PathVariable Long gameId, @PathVariable String teamId) {
-        Team team = this.teamRepository.findByGameIdAndName(Math.toIntExact(gameId), teamId).get();
-        return ResponseEntity.ok(team);
+    public ResponseEntity<TeamView> showTeam(@PathVariable Long gameId, @PathVariable String teamId,
+                                             Authentication authentication) {
+        Game game = this.gameRepository.findById(gameId)
+                .orElseThrow(() -> new NotFoundException("Game not found"));
+        if (!canView(game, authentication.getName())) {
+            return ResponseEntity.status(403).build();
+        }
+        Team team = this.teamRepository.findByGameIdAndName(Math.toIntExact(gameId), teamId)
+                .orElseThrow(() -> new NotFoundException("Team not found"));
+        return ResponseEntity.ok(view(team));
     }
 
     @PatchMapping("/{gameId}")
@@ -247,6 +268,37 @@ public class GameController {
                 "rootPassword", container.getRootPassword(),
                 "ipAddress", container.getIpAddress()
         ));
+    }
+
+    /**
+     * The game as sent to clients, with each team's container address filled
+     * in from the containers that currently exist for it.
+     */
+    private GameView view(Game game) {
+        Map<String, String> ipByTeam = new HashMap<>();
+        for (ContainerEntity container : containerRepository.findByGame(game)) {
+            if (container.getTeam() != null) {
+                ipByTeam.put(container.getTeam().getName(), container.getIpAddress());
+            }
+        }
+        return GameView.from(game, ipByTeam);
+    }
+
+    private TeamView view(Team team) {
+        String ipAddress = containerRepository.findByTeam(team)
+                .map(ContainerEntity::getIpAddress)
+                .orElse(null);
+        return TeamView.from(team, ipAddress);
+    }
+
+    /**
+     * Only the creator and the players taking part may see a game: it lists
+     * who plays, the scores and the addresses of the challenge containers.
+     */
+    private boolean canView(Game game, String username) {
+        boolean isCreator = game.getCreated_by() != null
+                && game.getCreated_by().getPlayer().equals(username);
+        return isCreator || teamOf(game, username) != null;
     }
 
     /**

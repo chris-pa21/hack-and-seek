@@ -30,12 +30,17 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -324,6 +329,137 @@ class GameControllerTest {
 
         // the username comes from the session, never from the request body
         verify(flagService).submitFlag(GAME_ID, "alice", "HAS{abc}");
+    }
+
+    // ── viewing ─────────────────────────────────────────────────────────
+
+    @Test
+    @WithMockUser(username = "bob")
+    @DisplayName("a player taking part can view the game")
+    void participantCanViewGame() throws Exception {
+        stubGame();
+
+        mockMvc.perform(get("/api/games/{id}", GAME_ID))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "carol")
+    @DisplayName("the creator can view their game without playing in it")
+    void creatorOutsideTheTeamsCanViewGame() throws Exception {
+        game.setCreated_by(new Player("carol", "secret"));
+        stubGame();
+
+        mockMvc.perform(get("/api/games/{id}", GAME_ID))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "stranger")
+    @DisplayName("someone who is not in the game cannot view it, its teams or a team")
+    void outsiderCannotViewGame() throws Exception {
+        stubGame();
+
+        mockMvc.perform(get("/api/games/{id}", GAME_ID))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/games/{id}/teams", GAME_ID))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/games/{id}/teams/{team}", GAME_ID, "alpha"))
+                .andExpect(status().isForbidden());
+
+        verify(teamRepository, never()).findByGameId(anyInt());
+    }
+
+    @Test
+    @WithMockUser(username = "alice")
+    @DisplayName("viewing a game that does not exist is a 404")
+    void viewingUnknownGameIsNotFound() throws Exception {
+        when(gameRepository.findById(GAME_ID)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/games/{id}", GAME_ID))
+                .andExpect(status().isNotFound());
+    }
+
+    // ── response shape ──────────────────────────────────────────────────
+
+    @Test
+    @WithMockUser(username = "alice")
+    @DisplayName("a game reaches the client without password hashes or VPN keys")
+    void gameResponseCarriesNoSecrets() throws Exception {
+        giveSecrets(alice);
+        giveSecrets(bob);
+        stubGame();
+
+        mockMvc.perform(get("/api/games/{id}", GAME_ID))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("HASH_"))))
+                .andExpect(content().string(not(containsString("PRIVATE_KEY_"))))
+                .andExpect(content().string(not(containsString("password"))))
+                .andExpect(content().string(not(containsString("vpn"))));
+    }
+
+    @Test
+    @WithMockUser(username = "alice")
+    @DisplayName("the game list reaches the client without password hashes or VPN keys")
+    void gameListCarriesNoSecrets() throws Exception {
+        giveSecrets(alice);
+        giveSecrets(bob);
+        when(gameRepository.findGamesByPlayer("alice")).thenReturn(List.of(game));
+
+        mockMvc.perform(get("/api/games"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].teams[0].members[0].username").value("alice"))
+                .andExpect(content().string(not(containsString("HASH_"))))
+                .andExpect(content().string(not(containsString("PRIVATE_KEY_"))));
+    }
+
+    @Test
+    @WithMockUser(username = "alice")
+    @DisplayName("a game names its creator and members and carries each team's container address")
+    void gameResponseShape() throws Exception {
+        alice.setPoints(120);
+        stubGame();
+        when(containerRepository.findByGame(game)).thenReturn(List.of(
+                ContainerEntity.builder().team(alpha).ipAddress("10.200.1.2").build()));
+
+        mockMvc.perform(get("/api/games/{id}", GAME_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(GAME_ID))
+                .andExpect(jsonPath("$.name").value("test-game"))
+                .andExpect(jsonPath("$.createdBy").value("alice"))
+                .andExpect(jsonPath("$.teams[0].name").value("alpha"))
+                .andExpect(jsonPath("$.teams[0].members[0].username").value("alice"))
+                .andExpect(jsonPath("$.teams[0].members[0].points").value(120))
+                .andExpect(jsonPath("$.teams[0].ipAddress").value("10.200.1.2"))
+                // bravo has no container, so no address
+                .andExpect(jsonPath("$.teams[1].ipAddress").isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = "alice")
+    @DisplayName("a stopped game names its winner by team name")
+    void stoppedGameNamesTheWinner() throws Exception {
+        game.setStarted_at(LocalDateTime.now());
+        alpha.setScore(200);
+        stubGame();
+        doAnswer(inv -> {
+            game.setFinished_at(LocalDateTime.now());
+            game.setWinnerTeam(alpha);
+            return null;
+        }).when(gameService).endGame(game, alpha);
+
+        mockMvc.perform(post("/api/games/{id}/stop", GAME_ID).with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.winnerTeam").value("alpha"))
+                .andExpect(jsonPath("$.finishedAt").exists());
+    }
+
+    private static void giveSecrets(Player player) {
+        player.setPassword("HASH_" + player.getPlayer());
+        player.setVpnIp("10.8.19.9");
+        player.setVpnPrivateKey("PRIVATE_KEY_" + player.getPlayer());
+        player.setVpnPublicKey("PUBLIC_KEY_" + player.getPlayer());
+        player.setVpnServerPublicKey("SERVER_KEY");
     }
 
     private void stubGame() {

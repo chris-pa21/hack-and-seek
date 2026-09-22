@@ -52,7 +52,7 @@ onMounted(() => {
     <div class="w-full overflow-y-auto flex flex-col gap-y-2 max-h-[500px]">
       <div
         v-for="(friend, index) in friends"
-        :key="friend.player"
+        :key="friend.username"
         :class="[
           'flex items-center px-4 py-3 rounded-lg w-full transition-colors',
           index % 2 === 0 ? 'bg-[#0F172A]' : 'bg-[#1E293B]',

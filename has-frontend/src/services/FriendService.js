@@ -1,102 +1,29 @@
 import axios from '@/plugins/axios'
-import { userAuthStore } from '@/stores/auth'
 
+// The backend acts as the logged-in user from the session, so none of these
+// calls say who "I" am - only who the other player is.
 export default {
   addFriend(receiver) {
-    const authStore = userAuthStore()
-    const user = authStore.currentUser
-
-    const username = user.username ?? user.player ?? null
-    if (!username) {
-      return Promise.reject(new Error('Could not determine current username'))
-    }
-
-    return axios.post('/api/friend', {
-      requester: username,
-      receiver,
-    })
+    return axios.post('/api/friend', { receiver })
   },
 
   getFriendRequests() {
-    const authStore = userAuthStore()
-    const user = authStore.currentUser
-
-    const username = user.username ?? user.player ?? null
-    if (!username) {
-      return Promise.reject(new Error('Could not determine current username'))
-    }
-
-    return axios.get('/api/friend/requests', {
-      params: {
-        username: username,
-      },
-    })
+    return axios.get('/api/friend/requests')
   },
 
   acceptFriendRequest(requester) {
-    const authStore = userAuthStore()
-    const user = authStore.currentUser
-
-    const username = user.username ?? user.player ?? null
-
-    if (!username) {
-      return Promise.reject(new Error('Could not determine current username'))
-    }
-
-    return axios.post('/api/friend/acceptRequest', {
-      requester: requester,
-      accepter: username,
-    })
+    return axios.post('/api/friend/acceptRequest', { requester })
   },
 
   refuseFriendRequest(requester) {
-    const authStore = userAuthStore()
-    const user = authStore.currentUser
-
-    const username = user.username ?? user.player ?? null
-
-    if (!username) {
-      return Promise.reject(new Error('Could not determine current username'))
-    }
-
-    return axios.post('/api/friend/refuseRequest', {
-      requester: requester,
-      refuser: username,
-    })
+    return axios.post('/api/friend/refuseRequest', { requester })
   },
 
   getAllFriends() {
-    const authStore = userAuthStore()
-    const user = authStore.currentUser
-
-    const username = user.username ?? user.player ?? null
-
-    if (!username) {
-      return Promise.reject(new Error('Could not determine current username'))
-    }
-
-    return axios.get('/api/friend/friends', {
-      params: {
-        username: username,
-      },
-    })
+    return axios.get('/api/friend/friends')
   },
 
   deleteFriend(friend) {
-    const authStore = userAuthStore()
-    const user = authStore.currentUser
-
-    const username = user.username ?? user.player ?? null
-
-    if (!username) {
-      return Promise.reject(new Error('Could not determine current username'))
-    }
-
-    return axios.delete('/api/friend', {
-      params: {
-        username: username,
-        friend: friend,
-      },
-    })
+    return axios.delete('/api/friend', { params: { friend } })
   },
 }

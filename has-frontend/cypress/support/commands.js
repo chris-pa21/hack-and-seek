@@ -61,11 +61,6 @@ Cypress.Commands.add('stubDashboardAPIs', (username = 'testuser') => {
     body: [],
   }).as('getFriends')
 
-  cy.intercept('GET', '/api/user/points*', {
-    statusCode: 200,
-    body: 100,
-  }).as('getPoints')
-
   cy.intercept('GET', '/api/user/me', {
     statusCode: 200,
     body: { username, points: 100, vpnIp: '10.8.19.2' },

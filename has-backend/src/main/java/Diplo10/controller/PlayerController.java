@@ -82,12 +82,6 @@ public class PlayerController {
                 .body(vpnService.generateConfig(player));
     }
 
-    @GetMapping("/points")
-    public ResponseEntity<Integer> getPoints(@RequestParam String username) {
-        Player player = playerService.findByPlayer(username);
-        return new ResponseEntity<>(player.getPoints(), HttpStatus.OK);
-    }
-
     private void ensureVpnConfig(Player player) {
         if (player.getVpnPrivateKey() != null && player.getVpnPublicKey() != null) return;
         try {

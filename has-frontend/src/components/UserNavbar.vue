@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { userAuthStore } from '@/stores/auth'
-import axios from '@/plugins/axios'
+import UserService from '@/services/UserService'
 
 const router = useRouter()
 const auth = userAuthStore()
@@ -10,12 +10,9 @@ const menuOpen = ref(false)
 const points = ref(0)
 
 async function fetchPoints() {
-  if (!auth.currentUser?.username) return
   try {
-    const response = await axios.get('/api/user/points', {
-      params: { username: auth.currentUser.username },
-    })
-    points.value = response.data
+    const response = await UserService.getMe()
+    points.value = response.data.points ?? 0
   } catch (error) {
     console.error('Failed to fetch points:', error)
   }

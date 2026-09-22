@@ -67,10 +67,10 @@ describe('Game Detail Page', () => {
       body: [],
     }).as('getDefeatLog')
 
-    cy.intercept('GET', '/api/user/points*', {
+    cy.intercept('GET', '/api/user/me', {
       statusCode: 200,
-      body: 100,
-    }).as('getPoints')
+      body: { username: 'testuser', points: 100, vpnIp: '10.8.19.2' },
+    }).as('getMe')
   }
 
   // ── Lobby View (Pending Game) ──────────────────────────────────────────
@@ -305,10 +305,10 @@ describe('Game Detail Page', () => {
         body: [],
       }).as('getChallenges')
 
-      cy.intercept('GET', '/api/user/points*', {
+      cy.intercept('GET', '/api/user/me', {
         statusCode: 200,
-        body: 0,
-      }).as('getPoints')
+        body: { username: 'testuser', points: 0, vpnIp: '10.8.19.2' },
+      }).as('getMe')
 
       cy.visit('/game/999')
       cy.wait('@getGameNotFound')

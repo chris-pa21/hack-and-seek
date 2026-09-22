@@ -12,7 +12,8 @@ describe('Dashboard', () => {
     it('displays the UserNavbar with username and points', () => {
       cy.get('nav').within(() => {
         cy.contains('testuser')
-        cy.contains('pts')
+        // points come from /api/user/me (stubbed with 100 in stubDashboardAPIs)
+        cy.contains('100 pts')
         cy.contains('button', 'Logout')
       })
     })
@@ -257,7 +258,8 @@ describe('Dashboard', () => {
 
       cy.wait('@searchUser')
       cy.contains('button', 'add friend').click()
-      cy.wait('@sendFriendRequest')
+      // only the other player is named; the backend knows who is asking
+      cy.wait('@sendFriendRequest').its('request.body').should('deep.equal', { receiver: 'charlie' })
       cy.contains('Friend request sent successfully.')
     })
 
@@ -319,7 +321,7 @@ describe('Dashboard', () => {
 
       // Click the accept (checkmark) button
       cy.contains('dave').parent().find('.primary-button-sm').click()
-      cy.wait('@acceptRequest')
+      cy.wait('@acceptRequest').its('request.body').should('deep.equal', { requester: 'dave' })
     })
 
     it('refuses a friend request', () => {
@@ -338,7 +340,7 @@ describe('Dashboard', () => {
 
       // Click the refuse (X) button
       cy.contains('dave').parent().find('.danger-button-sm').click()
-      cy.wait('@refuseRequest')
+      cy.wait('@refuseRequest').its('request.body').should('deep.equal', { requester: 'dave' })
     })
   })
 
@@ -384,7 +386,10 @@ describe('Dashboard', () => {
         .find('.danger-button-sm')
         .click()
 
-      cy.wait('@deleteFriend')
+      cy.wait('@deleteFriend').then(({ request }) => {
+        expect(request.url).to.include('friend=alice')
+        expect(request.url).not.to.include('username=')
+      })
     })
   })
 })

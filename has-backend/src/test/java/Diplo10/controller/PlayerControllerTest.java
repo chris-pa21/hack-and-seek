@@ -112,6 +112,16 @@ class PlayerControllerTest {
         verify(vpnService, never()).generateConfig(any());
     }
 
+    @Test
+    @WithMockUser(username = "alice")
+    @DisplayName("the old points-by-username endpoint is gone; /me carries the own points")
+    void pointsEndpointIsGone() throws Exception {
+        mockMvc.perform(get("/api/user/points").param("username", "bob"))
+                .andExpect(status().is4xxClientError());
+
+        verify(playerService, never()).findByPlayer("bob");
+    }
+
     private static Player withVpn(Player player, String ip, String privateKey) {
         player.setVpnIp(ip);
         player.setVpnPrivateKey(privateKey);

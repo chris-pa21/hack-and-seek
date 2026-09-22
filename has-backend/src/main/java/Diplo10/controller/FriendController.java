@@ -8,11 +8,18 @@ import Diplo10.service.FriendrequestService;
 import Diplo10.service.PlayerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Friend requests and friendships of the logged-in player. The acting player
+ * is always taken from the session: no request names "who I am", so nobody
+ * can send, accept, refuse or delete in someone else's name, or read another
+ * player's friends and requests.
+ */
 @RestController
 @RequestMapping("/api/friend")
 public class FriendController {
@@ -27,7 +34,7 @@ public class FriendController {
         this.friendrequestService = friendrequestService;
     }
 
-    public record CreateFriendRequest(String requester, String receiver) {}
+    public record CreateFriendRequest(String receiver) {}
 
     /**
      * status is REQUEST_SENT (201, request pending) or FRIENDSHIP_CREATED
@@ -36,8 +43,9 @@ public class FriendController {
     public record CreateFriendResponse(String status, Friendrequest request) {}
 
     @PostMapping
-    public ResponseEntity<CreateFriendResponse> createFriendRequest(@RequestBody CreateFriendRequest request) {
-        return friendrequestService.sendRequest(request.requester(), request.receiver())
+    public ResponseEntity<CreateFriendResponse> createFriendRequest(@RequestBody CreateFriendRequest request,
+                                                                    Authentication authentication) {
+        return friendrequestService.sendRequest(authentication.getName(), request.receiver())
                 .map(saved -> ResponseEntity.status(HttpStatus.CREATED)
                         .body(new CreateFriendResponse("REQUEST_SENT", saved)))
                 .orElseGet(() -> ResponseEntity.ok(
@@ -48,10 +56,10 @@ public class FriendController {
     public record GetFriendRequestsResponse(String username, Integer points) {}
 
     @GetMapping("/requests")
-    public ResponseEntity<List<GetFriendRequestsResponse>> getFriendRequests(@RequestParam String username) {
+    public ResponseEntity<List<GetFriendRequestsResponse>> getFriendRequests(Authentication authentication) {
         List<GetFriendRequestsResponse> response = new ArrayList<>();
 
-        List<Friendrequest> requests = friendrequestService.getAllFriendRequests(username);
+        List<Friendrequest> requests = friendrequestService.getAllFriendRequests(authentication.getName());
         for (Friendrequest req : requests) {
             Player requester = playerService.findByPlayer(req.getRequester());
             response.add(new GetFriendRequestsResponse(req.getRequester(), requester.getPoints()));
@@ -61,27 +69,29 @@ public class FriendController {
     }
 
 
-    public record AcceptFriendRequestRequest(String requester, String accepter) {}
+    public record AcceptFriendRequestRequest(String requester) {}
 
     @PostMapping("/acceptRequest")
-    public ResponseEntity<Void> acceptFriendRequest(@RequestBody AcceptFriendRequestRequest request) {
-        friendService.acceptFriendRequest(request.requester, request.accepter);
+    public ResponseEntity<Void> acceptFriendRequest(@RequestBody AcceptFriendRequestRequest request,
+                                                    Authentication authentication) {
+        friendService.acceptFriendRequest(request.requester(), authentication.getName());
         return ResponseEntity.ok().build();
     }
 
 
-    public record RefuseFriendRequestRequest(String requester, String refuser) {}
+    public record RefuseFriendRequestRequest(String requester) {}
 
     @PostMapping("/refuseRequest")
-    public ResponseEntity<Void> refuseFriendRequest(@RequestBody RefuseFriendRequestRequest request) {
-        friendService.refuseFriendRequest(request.requester, request.refuser);
+    public ResponseEntity<Void> refuseFriendRequest(@RequestBody RefuseFriendRequestRequest request,
+                                                    Authentication authentication) {
+        friendService.refuseFriendRequest(request.requester(), authentication.getName());
         return ResponseEntity.ok().build();
     }
 
 
     @GetMapping("/friends")
-    public ResponseEntity<List<PlayerSummary>> getFriends(@RequestParam String username) {
-        List<PlayerSummary> friends = friendService.getFriends(username).stream()
+    public ResponseEntity<List<PlayerSummary>> getFriends(Authentication authentication) {
+        List<PlayerSummary> friends = friendService.getFriends(authentication.getName()).stream()
                 .map(PlayerSummary::from)
                 .toList();
         return ResponseEntity.ok(friends);
@@ -89,8 +99,8 @@ public class FriendController {
 
 
     @DeleteMapping
-    public ResponseEntity<Void> deleteFriendRequest(@RequestParam String username, @RequestParam String friend){
-        friendService.deleteFriend(username, friend);
+    public ResponseEntity<Void> deleteFriend(@RequestParam String friend, Authentication authentication) {
+        friendService.deleteFriend(authentication.getName(), friend);
         return ResponseEntity.ok().build();
     }
 }

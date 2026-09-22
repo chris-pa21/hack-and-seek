@@ -11,6 +11,8 @@ import java.security.SecureRandom;
 
 @Service
 public class ContainerService {
+    static final String DEFAULT_FLAG_PATH = "/home/flag.txt";
+
     private final DockerClient dockerClient;
 
     public ContainerService(DockerClient dockerClient) {
@@ -21,9 +23,8 @@ public class ContainerService {
         // Read flag_path label from the image
         var imageInspect = dockerClient.inspectImageCmd(imageName).exec();
         var imageLabels = imageInspect.getConfig().getLabels();
-        String flagPath = (imageLabels != null && imageLabels.containsKey("flag_path"))
-                ? imageLabels.get("flag_path")
-                : "/home/flag.txt";
+        String flagPath = safeFlagPath(
+                imageLabels != null ? imageLabels.get("flag_path") : null);
 
         int points = 100; // default
         if (imageLabels != null && imageLabels.containsKey("points")) {
@@ -38,7 +39,7 @@ public class ContainerService {
                 .withCpuQuota(50000L)            // 0.5 CPU Cores Limit
                 .withRestartPolicy(RestartPolicy.unlessStoppedRestart());
 
-        String safeName = teamName.replaceAll("[^a-zA-Z0-9_.-]", "_");
+        String safeName = safeContainerName(teamName);
         String containerId = dockerClient.createContainerCmd(imageName)
                 .withName(safeName + "_" + System.currentTimeMillis())
                 .withHostConfig(hostConfig)
@@ -86,6 +87,30 @@ public class ContainerService {
         dockerClient.execStartCmd(pwExecId).exec(new ResultCallback.Adapter<Frame>());
 
         return new SpawnResult(containerId, ipAddress, flag, points, rootPassword, flagPath);
+    }
+
+    /**
+     * Docker only accepts [a-zA-Z0-9_.-] in container names, so team names the
+     * players chose freely have to be folded into that set.
+     */
+    static String safeContainerName(String teamName) {
+        return teamName.replaceAll("[^a-zA-Z0-9_.-]", "_");
+    }
+
+    /**
+     * The flag path is interpolated into a shell command, so a crafted image
+     * label could otherwise run arbitrary commands inside the challenge
+     * container. Anything that is not a plain absolute path falls back to the
+     * default.
+     */
+    static String safeFlagPath(String labelValue) {
+        if (labelValue == null
+                || !labelValue.matches("/[A-Za-z0-9._/-]*")
+                || labelValue.contains("..")
+                || labelValue.endsWith("/")) {
+            return DEFAULT_FLAG_PATH;
+        }
+        return labelValue;
     }
 
     private String generateRootPassword() {

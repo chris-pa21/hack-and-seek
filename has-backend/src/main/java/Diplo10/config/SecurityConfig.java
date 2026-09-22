@@ -1,6 +1,7 @@
 package Diplo10.config;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpStatus;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -43,6 +44,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated()
+                )
+                // this is a JSON API: answer unauthenticated calls with 401
+                // instead of redirecting to a login page that does not exist
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, authEx) ->
+                                res.setStatus(HttpStatus.UNAUTHORIZED.value()))
                 )
                 .formLogin(form -> form
                         .loginProcessingUrl("/api/auth/login")

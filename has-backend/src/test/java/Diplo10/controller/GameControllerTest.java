@@ -244,6 +244,38 @@ class GameControllerTest {
         verify(containerRepository, never()).findByTeam(any());
     }
 
+    // ── defeat log ──────────────────────────────────────────────────────
+
+    @Test
+    @WithMockUser(username = "alice")
+    @DisplayName("a participant can read the defeat log, without the flag values")
+    void participantReadsDefeatLogWithoutFlags() throws Exception {
+        stubGame();
+        when(flagService.getDefeatLog(GAME_ID)).thenReturn(List.of(
+                new Diplo10.dto.DefeatLogEntry(1L, "alpha", "bravo", 100,
+                        LocalDateTime.of(2026, 9, 22, 14, 3))));
+
+        mockMvc.perform(get("/api/games/{id}/defeat-log", GAME_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].attackingTeam").value("alpha"))
+                .andExpect(jsonPath("$[0].defeatedTeam").value("bravo"))
+                .andExpect(jsonPath("$[0].pointsAwarded").value(100))
+                // the captured flag is the defender's secret and is never sent
+                .andExpect(jsonPath("$[0].flag").doesNotExist());
+    }
+
+    @Test
+    @WithMockUser(username = "stranger")
+    @DisplayName("someone not in the game cannot read its defeat log")
+    void outsiderCannotReadDefeatLog() throws Exception {
+        stubGame();
+
+        mockMvc.perform(get("/api/games/{id}/defeat-log", GAME_ID))
+                .andExpect(status().isForbidden());
+
+        verify(flagService, never()).getDefeatLog(any());
+    }
+
     // ── flag submission ─────────────────────────────────────────────────
 
     @Test

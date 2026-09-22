@@ -1,6 +1,7 @@
 package Diplo10.service;
 
 import Diplo10.exception.NotFoundException;
+import Diplo10.dto.DefeatLogEntry;
 import Diplo10.entity.ContainerEntity;
 import Diplo10.entity.FlagSubmission;
 import Diplo10.entity.Game;
@@ -149,7 +150,15 @@ public class FlagService {
         return result;
     }
 
-    public List<FlagSubmission> getDefeatLog(Long gameId) {
-        return flagSubmissionRepository.findByGameIdOrderBySubmittedAtDesc(Math.toIntExact(gameId));
+    public List<DefeatLogEntry> getDefeatLog(Long gameId) {
+        return flagSubmissionRepository.findByGameIdOrderBySubmittedAtDesc(Math.toIntExact(gameId))
+                .stream()
+                .map(submission -> new DefeatLogEntry(
+                        submission.getId(),
+                        submission.getAttackingTeam(),
+                        submission.getDefeatedTeam(),
+                        submission.getPointsAwarded(),
+                        submission.getSubmittedAt()))
+                .toList();
     }
 }

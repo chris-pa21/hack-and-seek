@@ -2,6 +2,7 @@ package Diplo10.controller;
 
 import Diplo10.exception.NotFoundException;
 import Diplo10.dto.ChallengeDTO;
+import Diplo10.dto.DefeatLogEntry;
 import Diplo10.entity.ContainerEntity;
 import Diplo10.entity.FlagSubmission;
 import Diplo10.entity.Game;
@@ -198,7 +199,15 @@ public class GameController {
     }
 
     @GetMapping("/{gameId}/defeat-log")
-    public ResponseEntity<List<FlagSubmission>> getDefeatLog(@PathVariable Long gameId) {
+    public ResponseEntity<List<DefeatLogEntry>> getDefeatLog(@PathVariable Long gameId,
+                                                             Authentication authentication) {
+        Game game = this.gameRepository.findById(gameId)
+                .orElseThrow(() -> new NotFoundException("Game not found"));
+
+        if (teamOf(game, authentication.getName()) == null) {
+            return ResponseEntity.status(403).build();
+        }
+
         return ResponseEntity.ok(flagService.getDefeatLog(gameId));
     }
 
@@ -223,11 +232,7 @@ public class GameController {
                 .orElseThrow(() -> new NotFoundException("Game not found"));
 
         // Find the team the authenticated user belongs to
-        Team userTeam = game.getTeam_list().stream()
-                .filter(t -> t.getTeam_members().stream()
-                        .anyMatch(m -> m.getPlayer().equals(username)))
-                .findFirst()
-                .orElse(null);
+        Team userTeam = teamOf(game, username);
 
         if (userTeam == null) {
             return ResponseEntity.status(403).build();
@@ -244,4 +249,18 @@ public class GameController {
         ));
     }
 
+    /**
+     * The team the given player belongs to in this game, or null if they are
+     * not taking part in it.
+     */
+    private Team teamOf(Game game, String username) {
+        if (game.getTeam_list() == null) {
+            return null;
+        }
+        return game.getTeam_list().stream()
+                .filter(t -> t.getTeam_members() != null && t.getTeam_members().stream()
+                        .anyMatch(m -> m.getPlayer().equals(username)))
+                .findFirst()
+                .orElse(null);
+    }
 }

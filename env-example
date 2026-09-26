@@ -3,8 +3,8 @@
 PASSWORD=[PASSWORD]
 # shared secret between backend and VPN manager, e.g. `openssl rand -hex 32`
 VPN_MANAGER_TOKEN=[TOKEN]
-VPN_SERVER_PUBLIC_KEY=
-VPN_SERVER_ENDPOINT=
+# host and port players' WireGuard clients connect to; the port must match WIREGUARD_PORT
+VPN_SERVER_ENDPOINT=[HOST]:51820
 
 # default values, but feel free to change
 

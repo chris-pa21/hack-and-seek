@@ -16,8 +16,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/has
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=${PASSWORD}
-      - VPN_SERVER_PUBLIC_KEY=${VPN_SERVER_PUBLIC_KEY}
-      - VPN_SERVER_ENDPOINT=${VPN_SERVER_ENDPOINT}
+      - VPN_SERVER_ENDPOINT=${VPN_SERVER_ENDPOINT:?set VPN_SERVER_ENDPOINT in .env}
       - VPN_MANAGER_TOKEN=${VPN_MANAGER_TOKEN:?set VPN_MANAGER_TOKEN in .env}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

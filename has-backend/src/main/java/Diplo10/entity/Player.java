@@ -35,9 +35,6 @@ public class Player {
     @JsonIgnore
     private String vpnPublicKey;
 
-    @JsonIgnore
-    private String vpnServerPublicKey;
-
     @ManyToMany
     @JoinTable(
             name = "player_friends",

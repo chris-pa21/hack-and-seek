@@ -3,6 +3,7 @@ package Diplo10.service.vpn;
 import Diplo10.entity.Game;
 import Diplo10.entity.Player;
 import Diplo10.entity.Team;
+import Diplo10.exception.VpnUnavailableException;
 import Diplo10.repository.PlayerRepository;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Network;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Service
 public class VpnService {
@@ -17,14 +19,14 @@ public class VpnService {
     private static final String WG_CONTAINER = "has-wireguard-server-1";
     private static final String WG_INTERFACE = "wg0";
 
+    /** WireGuard public keys: 32 bytes, base64-encoded. */
+    private static final Pattern WG_KEY = Pattern.compile("[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=");
+
     private final DockerClient docker;
     private final VpnManagerClient vpnManagerClient;
     private final PlayerRepository playerRepository;
 
-    @Value("${vpn.server.public-key:SERVER_PUBKEY_HERE}")
-    private String serverPublicKey;
-
-    @Value("${vpn.server.endpoint:SERVER_IP:51820}")
+    @Value("${vpn.server.endpoint}")
     private String serverEndpoint;
 
     public VpnService(DockerClient docker, VpnManagerClient vpnManagerClient, PlayerRepository playerRepository) {
@@ -124,11 +126,6 @@ public class VpnService {
             needsSave = true;
         }
 
-        if (!serverPublicKey.equals(player.getVpnServerPublicKey())) {
-            player.setVpnServerPublicKey(serverPublicKey);
-            needsSave = true;
-        }
-
         if (needsSave) {
             playerRepository.save(player);
         }
@@ -169,10 +166,12 @@ public class VpnService {
      * The AllowedIPs covers the VPN subnet and the Docker bridge range so that
      * traffic to challenge containers is routed through the tunnel.
      * Actual access is enforced by iptables rules on the WireGuard host.
+     *
+     * @throws VpnUnavailableException if the WireGuard server is not running
      */
     public String generateConfig(Player player) {
-        String privateKey  = player.getVpnPrivateKey()      != null ? player.getVpnPrivateKey()      : "<PRIVATE_KEY_MISSING>";
-        String serverPub   = player.getVpnServerPublicKey() != null ? player.getVpnServerPublicKey() : serverPublicKey;
+        String privateKey  = player.getVpnPrivateKey() != null ? player.getVpnPrivateKey() : "<PRIVATE_KEY_MISSING>";
+        String serverPub   = serverPublicKey();
         String endpoint    = serverEndpoint;
 
         return "[Interface]\n" +
@@ -225,6 +224,21 @@ public class VpnService {
     // -------------------------------------------------------------------------
     // Internal helpers
     // -------------------------------------------------------------------------
+
+    /**
+     * The server's public key, read from the running interface. The WireGuard
+     * container creates its keypair on first start, so there is nothing to
+     * configure; reading it on every use means a regenerated key is picked up
+     * at once.
+     */
+    private String serverPublicKey() {
+        String out = execInContainer("wg", "show", WG_INTERFACE, "public-key");
+        String key = out == null ? "" : out.trim();
+        if (!WG_KEY.matcher(key).matches()) {
+            throw new VpnUnavailableException("WireGuard server is not running, try again shortly");
+        }
+        return key;
+    }
 
     private String getSubnet(String networkId) {
         try {

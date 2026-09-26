@@ -19,13 +19,12 @@ class PlayerJsonTest {
         alice.setVpnIp("10.8.19.2");
         alice.setVpnPrivateKey("PRIVATE_KEY_alice");
         alice.setVpnPublicKey("PUBLIC_KEY_alice");
-        alice.setVpnServerPublicKey("SERVER_KEY");
 
         String json = new ObjectMapper().writeValueAsString(alice);
 
         assertThat(json)
                 .contains("\"player\":\"alice\"")
                 .doesNotContain("HASH_alice", "PRIVATE_KEY_alice", "PUBLIC_KEY_alice",
-                        "SERVER_KEY", "10.8.19.2", "password", "vpn");
+                        "10.8.19.2", "password", "vpn");
     }
 }

@@ -36,6 +36,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
+    @ExceptionHandler(VpnUnavailableException.class)
+    public ResponseEntity<ApiError> handleVpnUnavailable(VpnUnavailableException ex) {
+        return build(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+    }
+
     private ResponseEntity<ApiError> build(HttpStatus status, String message) {
         return ResponseEntity.status(status)
                 .body(new ApiError(LocalDateTime.now(), status.value(), status.getReasonPhrase(), message));

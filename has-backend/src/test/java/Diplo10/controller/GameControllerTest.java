@@ -570,7 +570,6 @@ class GameControllerTest {
         player.setVpnIp("10.8.19.9");
         player.setVpnPrivateKey("PRIVATE_KEY_" + player.getPlayer());
         player.setVpnPublicKey("PUBLIC_KEY_" + player.getPlayer());
-        player.setVpnServerPublicKey("SERVER_KEY");
     }
 
     private void stubChallenges() {

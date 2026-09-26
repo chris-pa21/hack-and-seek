@@ -1,6 +1,7 @@
 package Diplo10.controller;
 
 import Diplo10.entity.Player;
+import Diplo10.exception.VpnUnavailableException;
 import Diplo10.service.PlayerService;
 import Diplo10.service.vpn.VpnService;
 import org.junit.jupiter.api.BeforeEach;
@@ -110,6 +111,20 @@ class PlayerControllerTest {
                 .andExpect(status().isServiceUnavailable());
 
         verify(vpnService, never()).generateConfig(any());
+    }
+
+    @Test
+    @WithMockUser(username = "alice")
+    @DisplayName("a download while the WireGuard server is down answers 503, not a broken config")
+    void vpnConfigUnavailableWithoutWireguard() throws Exception {
+        when(playerService.findByPlayer("alice")).thenReturn(alice);
+        when(vpnService.generateConfig(alice))
+                .thenThrow(new VpnUnavailableException("WireGuard server is not running, try again shortly"));
+
+        mockMvc.perform(get("/api/user/me/vpn-config"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.status").value(503))
+                .andExpect(jsonPath("$.message").value("WireGuard server is not running, try again shortly"));
     }
 
     @Test

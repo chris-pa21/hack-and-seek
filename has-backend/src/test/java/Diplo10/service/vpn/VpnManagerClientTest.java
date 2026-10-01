@@ -4,9 +4,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
@@ -49,6 +51,18 @@ public class VpnManagerClientTest {
                 .andRespond(withSuccess());
 
         vpnManagerClient.removePlayerFromGame("10.8.19.5", "10.200.7.0/24");
+
+        this.server.verify();
+    }
+
+    @Test
+    public void instanceIdIsReadFromHealth() {
+        this.server.expect(requestTo(BASE_URL + "/health"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("{\"status\":\"ok\",\"instance\":\"3f9a1c0be7d24a65\"}",
+                        MediaType.APPLICATION_JSON));
+
+        assertThat(vpnManagerClient.instanceId()).isEqualTo("3f9a1c0be7d24a65");
 
         this.server.verify();
     }

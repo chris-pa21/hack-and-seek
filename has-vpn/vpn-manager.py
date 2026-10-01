@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import hmac
 import ipaddress
 import os
+import secrets
 import subprocess
 import sys
 
@@ -27,12 +28,19 @@ VPN_SUBNET = ipaddress.IPv4Network(os.environ.get("INTERNAL_SUBNET", "10.8.19.0/
 VPN_SERVER_IP = VPN_SUBNET.network_address + 1
 GAME_RANGE = ipaddress.IPv4Network("10.200.0.0/16")
 
-def run_cmd(args):
-    """Runs a command safely using a list of arguments."""
+# New on every start of the manager, so on every start of the WireGuard
+# container. The backend compares it to notice that peers and firewall rules
+# were wiped and must be restored.
+INSTANCE_ID = secrets.token_hex(8)
+
+def run_cmd(args, quiet=False):
+    """Runs a command safely using a list of arguments. quiet=True does not log a
+    failure, for commands where failing is an expected answer, like iptables -C."""
     try:
         result = subprocess.run(args, capture_output=True, text=True)
         if result.returncode != 0:
-            print(f"Command Failed: {' '.join(args)}\nError: {result.stderr}", file=sys.stderr)
+            if not quiet:
+                print(f"Command Failed: {' '.join(args)}\nError: {result.stderr}", file=sys.stderr)
             return False
         return True
     except Exception as e:
@@ -40,9 +48,11 @@ def run_cmd(args):
         return False
 
 def ensure_rule(chain, rule):
-    """Appends an iptables rule unless it is already there, so restarts don't pile up duplicates."""
-    if not run_cmd(["iptables", "-C", chain] + rule):
-        run_cmd(["iptables", "-A", chain] + rule)
+    """Appends an iptables rule unless it is already there, so repeated calls don't
+    pile up duplicates. True if the rule is in place afterwards."""
+    if run_cmd(["iptables", "-C", chain] + rule, quiet=True):
+        return True
+    return run_cmd(["iptables", "-A", chain] + rule)
 
 def init_firewall():
     """Sets up the 'Default Deny' state for the VPN traffic."""
@@ -100,7 +110,7 @@ def player_rule_args():
 
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({"status": "ok"}), 200
+    return jsonify({"status": "ok", "instance": INSTANCE_ID}), 200
 
 @app.route('/api/game/player', methods=['POST'])
 def add_player_to_game():
@@ -109,10 +119,12 @@ def add_player_to_game():
         return jsonify({"error": "Invalid playerIp or subnet"}), 400
     player_ip, subnet = args
 
-    # Allow specific player to reach game subnet and vice-versa
+    # Allow specific player to reach game subnet and vice-versa. Idempotent: the
+    # backend re-sends every grant after a restart, and a duplicate rule would
+    # survive the single -D of a later revoke.
     success = True
-    success &= run_cmd(["iptables", "-A", "FORWARD", "-s", player_ip, "-d", subnet, "-j", "ACCEPT"])
-    success &= run_cmd(["iptables", "-A", "FORWARD", "-s", subnet, "-d", player_ip, "-j", "ACCEPT"])
+    success &= ensure_rule("FORWARD", ["-s", player_ip, "-d", subnet, "-j", "ACCEPT"])
+    success &= ensure_rule("FORWARD", ["-s", subnet, "-d", player_ip, "-j", "ACCEPT"])
 
     if success:
         return jsonify({"status": "active", "playerIp": player_ip, "subnet": subnet}), 200

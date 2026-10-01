@@ -48,6 +48,18 @@ public class VpnManagerClient {
                 .toBodilessEntity();
     }
 
+    /**
+     * Identifies the manager's current run. A different value than before means
+     * the WireGuard container restarted and lost its peers and firewall rules.
+     */
+    public String instanceId() {
+        Map<?, ?> health = restClient.get()
+                .uri("/health")
+                .retrieve()
+                .body(Map.class);
+        return health == null ? null : (String) health.get("instance");
+    }
+
     public void removePlayerFromGame(String playerIp, String subnet) {
         restClient.method(org.springframework.http.HttpMethod.DELETE)
                 .uri(uriBuilder -> uriBuilder.path("/api/game/player").build())

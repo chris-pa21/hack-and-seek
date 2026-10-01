@@ -32,7 +32,7 @@ def manager(monkeypatch):
 
     module.commands = []
 
-    def record(args):
+    def record(args, quiet=False):
         module.commands.append(args)
         return True
 
@@ -110,16 +110,41 @@ def test_health_needs_no_token(client):
     assert client.get("/health").status_code == 200
 
 
+def test_health_reports_a_stable_instance_id(client, manager):
+    # the backend restores peers and rules when this changes, so it must stay
+    # the same for as long as the manager runs
+    first = client.get("/health").get_json()["instance"]
+    second = client.get("/health").get_json()["instance"]
+
+    assert first == second == manager.INSTANCE_ID
+    assert len(first) == 16
+
+
 # ── granting and revoking access ────────────────────────────────────────
 
-def test_valid_request_opens_both_directions(client, manager):
+def test_valid_request_opens_both_directions(client, manager, monkeypatch):
+    # -C (check) fails: neither rule exists yet, so both get appended
+    monkeypatch.setattr(manager, "run_cmd",
+                        lambda args, quiet=False: manager.commands.append(args) or args[1] != "-C")
+
     response = post_player(client, VALID)
 
     assert response.status_code == 200
     assert manager.commands == [
+        ["iptables", "-C", "FORWARD", "-s", "10.8.19.5", "-d", "10.200.7.0/24", "-j", "ACCEPT"],
         ["iptables", "-A", "FORWARD", "-s", "10.8.19.5", "-d", "10.200.7.0/24", "-j", "ACCEPT"],
+        ["iptables", "-C", "FORWARD", "-s", "10.200.7.0/24", "-d", "10.8.19.5", "-j", "ACCEPT"],
         ["iptables", "-A", "FORWARD", "-s", "10.200.7.0/24", "-d", "10.8.19.5", "-j", "ACCEPT"],
     ]
+
+
+def test_granting_twice_adds_no_duplicate_rules(client, manager):
+    # the recorder answers True to -C: both rules already exist. A duplicate
+    # would survive the single -D of a later revoke and keep the access open.
+    response = post_player(client, VALID)
+
+    assert response.status_code == 200
+    assert [c for c in manager.commands if c[1] == "-A"] == []
 
 
 def test_delete_removes_both_directions(client, manager):
@@ -198,7 +223,7 @@ def test_unused_routes_are_gone(client, method, path):
 
 def test_firewall_blocks_the_api_on_the_tunnel(manager, monkeypatch):
     # -C (check) fails for every rule, so each one gets appended
-    monkeypatch.setattr(manager, "run_cmd", lambda args: manager.commands.append(args) or args[1] != "-C")
+    monkeypatch.setattr(manager, "run_cmd", lambda args, quiet=False: manager.commands.append(args) or args[1] != "-C")
 
     manager.init_firewall()
 

@@ -58,7 +58,10 @@ services:
       - TZ=Europe/Vienna
       - SERVERURL=wireguard-server
       - SERVERPORT=${WIREGUARD_PORT}
-      - PEERS=2
+      # Must be set, or the image runs as a client. 0 means no pre-made peers:
+      # the backend registers every player itself, and pre-made peers would
+      # take the same 10.8.19.x addresses.
+      - PEERS=0
       - PEERDNS=8.8.8.8
       - INTERNAL_SUBNET=10.8.19.0/24
       - VPN_MANAGER_TOKEN=${VPN_MANAGER_TOKEN:?set VPN_MANAGER_TOKEN in .env}

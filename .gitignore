@@ -14,3 +14,6 @@ publickey-*
 
 # Python bytecode from running the VPN manager tests
 __pycache__/
+
+# Local notes and settings for Claude Code, kept out of the repository
+/.claude/

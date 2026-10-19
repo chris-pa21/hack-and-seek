@@ -35,7 +35,7 @@ public class GameService {
     @Transactional
     public Game startGame(Game game) {
         // Create one shared network for the entire game
-        String networkId = networkService.createIsolatedNetwork(game.getName());
+        String networkId = networkService.createIsolatedNetwork(game);
 
         // Start a container for each team
         try {
@@ -73,7 +73,7 @@ public class GameService {
         orchestrationService.terminateGame(game);
 
         // Revoke access and detach from network
-        String networkId = networkService.getIsolatedNetworkId(game.getName());
+        String networkId = networkService.getIsolatedNetworkId(game);
         if (networkId != null) {
             vpnService.revokeGameAccess(game, networkId);
             vpnService.excludeNetwork(networkId);

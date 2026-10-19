@@ -73,6 +73,6 @@ public class OrchestrationService {
         repository.deleteAll(containers);
 
         // Remove the shared game network
-        networkService.deleteIsolatedNetwork(game.getName());
+        networkService.deleteIsolatedNetwork(game);
     }
 }

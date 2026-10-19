@@ -1,9 +1,8 @@
 package Diplo10.service.orchestration;
 
-import Diplo10.service.vpn.VpnService;
+import Diplo10.entity.Game;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Network;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -17,23 +16,16 @@ public class NetworkService {
         this.dockerClient = dockerClient;
     }
 
-    public String createIsolatedNetwork(String gameName) {
-        String networkName = "net_" + gameName.replaceAll("[^a-zA-Z0-9]", "_");
+    /**
+     * Creates the game's network, or returns it if it already exists. The name
+     * comes from the game id rather than the game name: names are chosen freely
+     * and need not be unique, and two running games sharing a network would let
+     * each game's players reach the other's containers.
+     */
+    public String createIsolatedNetwork(Game game) {
+        String networkName = networkName(game);
 
-        // Docker name filter is a substring match — find exact match only
         Network existing = findExact(networkName);
-
-        // If old network uses 172.x.x.x, delete it and recreate with 10.200.x.x
-        if (existing != null && hasLegacySubnet(existing)) {
-            try {
-                dockerClient.removeNetworkCmd(existing.getId()).exec();
-                System.out.println("Removed legacy 172.x.x.x network: " + networkName);
-            } catch (Exception e) {
-                System.err.println("Could not remove legacy network " + networkName + ": " + e.getMessage());
-            }
-            existing = null;
-        }
-
         if (existing != null) {
             return existing.getId();
         }
@@ -51,24 +43,22 @@ public class NetworkService {
         return networkId;
     }
 
-    public String getIsolatedNetworkId(String gameName) {
-        String networkName = "net_" + gameName.replaceAll("[^a-zA-Z0-9]", "_");
-        Network net = findExact(networkName);
+    public String getIsolatedNetworkId(Game game) {
+        Network net = findExact(networkName(game));
         return net != null ? net.getId() : null;
     }
 
+    static String networkName(Game game) {
+        return "net_game" + game.getId();
+    }
+
     private Network findExact(String networkName) {
+        // Docker's name filter is a substring match, so filter again for the exact name
         return dockerClient.listNetworksCmd().withNameFilter(networkName).exec()
             .stream()
             .filter(n -> networkName.equals(n.getName()))
             .findFirst()
             .orElse(null);
-    }
-
-    private boolean hasLegacySubnet(Network network) {
-        if (network.getIpam() == null || network.getIpam().getConfig() == null) return false;
-        return network.getIpam().getConfig().stream()
-            .anyMatch(c -> c.getSubnet() != null && c.getSubnet().startsWith("172."));
     }
 
     /**
@@ -94,8 +84,8 @@ public class NetworkService {
         return "10.200." + (maxThird + 1) + ".0/24";
     }
 
-    public void deleteIsolatedNetwork(String gameName) {
-        String networkName = "net_" + gameName.replaceAll("[^a-zA-Z0-9]", "_");
+    public void deleteIsolatedNetwork(Game game) {
+        String networkName = networkName(game);
         Network net = findExact(networkName);
         if (net != null) {
             try {

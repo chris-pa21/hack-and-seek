@@ -65,7 +65,7 @@ public class VpnResyncService {
     }
 
     private void restore(Game game) {
-        String networkId = networkService.getIsolatedNetworkId(game.getName());
+        String networkId = networkService.getIsolatedNetworkId(game);
         if (networkId == null) {
             return;
         }

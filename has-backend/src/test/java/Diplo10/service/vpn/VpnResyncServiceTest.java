@@ -59,7 +59,7 @@ class VpnResyncServiceTest {
         Game finished = game("finished", LocalDateTime.now().minusHours(1), LocalDateTime.now(), carol);
         when(vpnManagerClient.instanceId()).thenReturn("instance-1");
         when(gameRepository.findAll()).thenReturn(List.of(lobby, running, finished));
-        when(networkService.getIsolatedNetworkId("running")).thenReturn(NETWORK_ID);
+        when(networkService.getIsolatedNetworkId(running)).thenReturn(NETWORK_ID);
 
         resync.resyncIfReset();
 
@@ -68,8 +68,8 @@ class VpnResyncServiceTest {
         verify(vpnService).ensureVpnConfig(bob);
         verify(vpnService).authorizeGameAccess(running, NETWORK_ID);
         verify(vpnService, never()).ensureVpnConfig(carol);
-        verify(networkService, never()).getIsolatedNetworkId("lobby");
-        verify(networkService, never()).getIsolatedNetworkId("finished");
+        verify(networkService, never()).getIsolatedNetworkId(lobby);
+        verify(networkService, never()).getIsolatedNetworkId(finished);
     }
 
     @Test
@@ -77,7 +77,7 @@ class VpnResyncServiceTest {
     void sameInstanceIsNotRestoredTwice() {
         when(vpnManagerClient.instanceId()).thenReturn("instance-1");
         when(gameRepository.findAll()).thenReturn(List.of(running));
-        when(networkService.getIsolatedNetworkId("running")).thenReturn(NETWORK_ID);
+        when(networkService.getIsolatedNetworkId(running)).thenReturn(NETWORK_ID);
 
         resync.resyncIfReset();
         resync.resyncIfReset();
@@ -90,7 +90,7 @@ class VpnResyncServiceTest {
     void newInstanceIsRestored() {
         when(vpnManagerClient.instanceId()).thenReturn("instance-1", "instance-2");
         when(gameRepository.findAll()).thenReturn(List.of(running));
-        when(networkService.getIsolatedNetworkId("running")).thenReturn(NETWORK_ID);
+        when(networkService.getIsolatedNetworkId(running)).thenReturn(NETWORK_ID);
 
         resync.resyncIfReset();
         resync.resyncIfReset();
@@ -106,7 +106,7 @@ class VpnResyncServiceTest {
                 .thenThrow(new ResourceAccessException("Connection refused"))
                 .thenReturn("instance-1");
         when(gameRepository.findAll()).thenReturn(List.of(running));
-        when(networkService.getIsolatedNetworkId("running")).thenReturn(NETWORK_ID);
+        when(networkService.getIsolatedNetworkId(running)).thenReturn(NETWORK_ID);
 
         resync.resyncIfReset();
         verifyNoInteractions(gameRepository, vpnService);
@@ -120,7 +120,7 @@ class VpnResyncServiceTest {
     void failedRestoreIsRetried() {
         when(vpnManagerClient.instanceId()).thenReturn("instance-1");
         when(gameRepository.findAll()).thenReturn(List.of(running));
-        when(networkService.getIsolatedNetworkId("running")).thenReturn(NETWORK_ID);
+        when(networkService.getIsolatedNetworkId(running)).thenReturn(NETWORK_ID);
         doThrow(new ResourceAccessException("Connection reset"))
                 .doNothing()
                 .when(vpnService).authorizeGameAccess(running, NETWORK_ID);
@@ -137,7 +137,7 @@ class VpnResyncServiceTest {
     void gameWithoutNetworkIsSkipped() {
         when(vpnManagerClient.instanceId()).thenReturn("instance-1");
         when(gameRepository.findAll()).thenReturn(List.of(running));
-        when(networkService.getIsolatedNetworkId("running")).thenReturn(null);
+        when(networkService.getIsolatedNetworkId(running)).thenReturn(null);
 
         resync.resyncIfReset();
 

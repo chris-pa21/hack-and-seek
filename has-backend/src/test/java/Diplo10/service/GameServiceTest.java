@@ -75,7 +75,7 @@ class GameServiceTest {
     @Test
     @DisplayName("starting a game creates the network, a container per team and VPN access")
     void startGameSetsEverythingUp() {
-        when(networkService.createIsolatedNetwork("test-game")).thenReturn(NETWORK_ID);
+        when(networkService.createIsolatedNetwork(game)).thenReturn(NETWORK_ID);
         when(gameRepository.save(game)).thenReturn(game);
 
         Game started = gameService.startGame(game);
@@ -92,7 +92,7 @@ class GameServiceTest {
     @Test
     @DisplayName("if any team's container fails the whole start is rolled back")
     void startGameIsAllOrNothing() {
-        when(networkService.createIsolatedNetwork("test-game")).thenReturn(NETWORK_ID);
+        when(networkService.createIsolatedNetwork(game)).thenReturn(NETWORK_ID);
         when(orchestrationService.setupTeamContainer(game, alpha, NETWORK_ID))
                 .thenThrow(new RuntimeException("docker daemon unreachable"));
 
@@ -111,7 +111,7 @@ class GameServiceTest {
     @Test
     @DisplayName("a later team failing also rolls back the teams that already started")
     void startGameRollsBackPartialProgress() {
-        when(networkService.createIsolatedNetwork("test-game")).thenReturn(NETWORK_ID);
+        when(networkService.createIsolatedNetwork(game)).thenReturn(NETWORK_ID);
         when(orchestrationService.setupTeamContainer(game, bravo, NETWORK_ID))
                 .thenThrow(new RuntimeException("no such image"));
 
@@ -128,7 +128,7 @@ class GameServiceTest {
     @Test
     @DisplayName("ending a game records the winner and tears the infrastructure down")
     void endGameTearsDown() {
-        when(networkService.getIsolatedNetworkId("test-game")).thenReturn(NETWORK_ID);
+        when(networkService.getIsolatedNetworkId(game)).thenReturn(NETWORK_ID);
 
         gameService.endGame(game, alpha);
 
@@ -143,7 +143,7 @@ class GameServiceTest {
     @Test
     @DisplayName("a game that ends in a draw is recorded with no winner")
     void endGameAcceptsADraw() {
-        when(networkService.getIsolatedNetworkId("test-game")).thenReturn(null);
+        when(networkService.getIsolatedNetworkId(game)).thenReturn(null);
 
         gameService.endGame(game, null);
 

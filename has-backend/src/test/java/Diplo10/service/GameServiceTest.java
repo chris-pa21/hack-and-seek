@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -28,6 +29,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -135,9 +138,25 @@ class GameServiceTest {
         assertThat(game.getFinished_at()).isNotNull();
         assertThat(game.getWinnerTeam()).isEqualTo(alpha);
         verify(gameRepository).save(game);
-        verify(orchestrationService).terminateGame(game);
-        verify(vpnService).revokeGameAccess(game, NETWORK_ID);
+        // WireGuard must be off the network before it is deleted, or Docker
+        // refuses and the network leaks
+        InOrder order = inOrder(vpnService, orchestrationService);
+        order.verify(vpnService).revokeGameAccess(game, NETWORK_ID);
+        order.verify(vpnService).excludeNetwork(NETWORK_ID);
+        order.verify(orchestrationService).terminateGame(game);
+    }
+
+    @Test
+    @DisplayName("an unreachable VPN manager does not leave the containers running")
+    void endGameTearsDownWhenRevokeFails() {
+        when(networkService.getIsolatedNetworkId(game)).thenReturn(NETWORK_ID);
+        doThrow(new RuntimeException("connection refused"))
+                .when(vpnService).revokeGameAccess(game, NETWORK_ID);
+
+        gameService.endGame(game, alpha);
+
         verify(vpnService).excludeNetwork(NETWORK_ID);
+        verify(orchestrationService).terminateGame(game);
     }
 
     @Test
@@ -200,12 +219,17 @@ class GameServiceTest {
         alpha.getTeam_members().clear();
         game.setStarted_at(LocalDateTime.now());
         stubLookup("bob", bob);
+        when(networkService.getIsolatedNetworkId(game)).thenReturn(NETWORK_ID);
 
         boolean deleted = gameService.dismissGame(GAME_ID, "bob");
 
         assertThat(deleted).isTrue();
-        // otherwise the containers would outlive the game that owned them
-        verify(orchestrationService).terminateGame(game);
+        // otherwise the containers, the network and the players' access
+        // would outlive the game that owned them
+        InOrder order = inOrder(vpnService, orchestrationService);
+        order.verify(vpnService).revokeGameAccess(game, NETWORK_ID);
+        order.verify(vpnService).excludeNetwork(NETWORK_ID);
+        order.verify(orchestrationService).terminateGame(game);
         verify(gameRepository).delete(game);
     }
 

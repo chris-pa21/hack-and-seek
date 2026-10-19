@@ -69,15 +69,7 @@ public class GameService {
         game.setWinnerTeam(winner);
         gameRepository.save(game);
 
-        // Stop and remove all remaining containers + network
-        orchestrationService.terminateGame(game);
-
-        // Revoke access and detach from network
-        String networkId = networkService.getIsolatedNetworkId(game);
-        if (networkId != null) {
-            vpnService.revokeGameAccess(game, networkId);
-            vpnService.excludeNetwork(networkId);
-        }
+        tearDown(game);
     }
 
     public boolean dismissGame(Long gameId, String username) {
@@ -112,13 +104,36 @@ public class GameService {
             // network first, or they would keep running with nothing
             // referencing them.
             if (game.getStarted_at() != null && game.getFinished_at() == null) {
-                orchestrationService.terminateGame(game);
+                tearDown(game);
             }
             gameRepository.delete(game);
             return true; // game deleted
         }
 
         return false; // game still exists
+    }
+
+    /**
+     * Revokes the players' access, detaches WireGuard and only then removes the
+     * containers and the network: Docker refuses to delete a network that
+     * WireGuard is still attached to, so the other order leaked every game's
+     * network and subnet.
+     */
+    private void tearDown(Game game) {
+        String networkId = networkService.getIsolatedNetworkId(game);
+        if (networkId != null) {
+            // Best effort: an unreachable VPN manager must not leave the
+            // containers running. It can only be unreachable after it or its
+            // container stopped, and it flushes all rules when it starts again.
+            try {
+                vpnService.revokeGameAccess(game, networkId);
+            } catch (Exception e) {
+                System.err.println("Could not revoke VPN access for game " + game.getName() + ": " + e.getMessage());
+            }
+            vpnService.excludeNetwork(networkId);
+        }
+
+        orchestrationService.terminateGame(game);
     }
 
     /**

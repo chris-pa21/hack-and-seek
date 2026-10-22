@@ -25,8 +25,11 @@ services:
 
   database:
     image: postgres:15-alpine
-    # Deliberately not published to the host: the backend reaches it internally
-    # as jdbc:postgresql://database:5432/has over the compose network.
+    # The backend reaches it internally as jdbc:postgresql://database:5432/has.
+    # Bound to loopback only for a backend run on the host (./gradlew bootRun),
+    # never reachable from the LAN or the game networks.
+    ports:
+      - "127.0.0.1:5432:5432"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${PASSWORD}

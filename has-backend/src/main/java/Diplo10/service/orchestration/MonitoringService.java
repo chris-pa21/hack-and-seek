@@ -58,6 +58,11 @@ public class MonitoringService {
             List<ContainerEntity> containers = containerRepository.findByGameAndDisqualifiedFalse(game);
 
             for (ContainerEntity container : containers) {
+                // A disqualification can end the game, which removes the remaining
+                // containers; checking them would disqualify the winner too.
+                if (game.getFinished_at() != null) {
+                    break;
+                }
                 runHealthChecks(game, container);
             }
         }

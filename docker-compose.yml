@@ -10,8 +10,8 @@ services:
   backend:
     build:
       context: ./has-backend
-    ports:
-      - "${BACKEND_PORT}:8080"
+    # Not published to the host: the frontend nginx proxies /api/ to backend:8080
+    # over the compose network, so the browser only ever talks to the frontend.
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://database:5432/has
       - SPRING_DATASOURCE_USERNAME=postgres
@@ -25,8 +25,8 @@ services:
 
   database:
     image: postgres:15-alpine
-    ports:
-      - "${POSTGRES_PORT}:5432"
+    # Deliberately not published to the host: the backend reaches it internally
+    # as jdbc:postgresql://database:5432/has over the compose network.
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${PASSWORD}
@@ -34,8 +34,10 @@ services:
 
   adminer:
     image: adminer:latest
+    # Admin-only DB UI: bound to loopback so it is reachable from the host
+    # (e.g. via SSH tunnel) but never from the LAN or the game network.
     ports:
-      - "${ADMINER_PORT}:8080"
+      - "127.0.0.1:${ADMINER_PORT}:8080"
     depends_on:
       - database
 

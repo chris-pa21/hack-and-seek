@@ -153,7 +153,7 @@ class ContainerServiceTest {
 
             assertThat(first.flag()).matches("HAS\\{[0-9a-f]{32}\\}");
             assertThat(second.flag()).isNotEqualTo(first.flag());
-            assertThat(first.rootPassword()).hasSize(8);
+            assertThat(first.rootPassword()).hasSize(24);
             assertThat(second.rootPassword()).isNotEqualTo(first.rootPassword());
         }
 

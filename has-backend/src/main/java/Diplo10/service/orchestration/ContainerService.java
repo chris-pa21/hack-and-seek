@@ -114,10 +114,11 @@ public class ContainerService {
     }
 
     private String generateRootPassword() {
+        final int ROOT_PASSWORD_LENGTH = 24;
         SecureRandom random = new SecureRandom();
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        StringBuilder sb = new StringBuilder(8);
-        for (int i = 0; i < 8; i++) {
+        StringBuilder sb = new StringBuilder(ROOT_PASSWORD_LENGTH);
+        for (int i = 0; i < ROOT_PASSWORD_LENGTH; i++) {
             sb.append(chars.charAt(random.nextInt(chars.length())));
         }
         return sb.toString();

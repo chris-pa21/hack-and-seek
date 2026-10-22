@@ -23,7 +23,8 @@ RUN mkdir /run/sshd
 
 # Root password (overwritten by backend at runtime)
 RUN echo "root:defendme" | chpasswd \
-    && sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+    && sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && printf 'MaxAuthTries 3\nLoginGraceTime 20\n' >> /etc/ssh/sshd_config
 
 # Create home directory for www-data and placeholder flag
 RUN mkdir -p /home/www-data \

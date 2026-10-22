@@ -22,7 +22,8 @@ RUN mkdir /run/sshd
 
 # Root-Passwort fuer Verteidiger
 RUN echo "root:defendme" | chpasswd \
-    && sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+    && sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && printf 'MaxAuthTries 3\nLoginGraceTime 20\n' >> /etc/ssh/sshd_config
 
 # Verwundbarer User mit schwachem Passwort (Angriffsziel)
 RUN useradd -m -s /bin/bash jdoe \

@@ -47,6 +47,9 @@ services:
   wireguard-server:
     build:
       context: ./has-vpn
+    # Fixed name: the backend runs wg commands in this container by name
+    # (VpnService.WG_CONTAINER), so it must not depend on the project name.
+    container_name: has-wireguard-server
     ports:
       - "${WIREGUARD_PORT}:51820/udp"
       # the VPN manager API (9999) is deliberately not published: only the

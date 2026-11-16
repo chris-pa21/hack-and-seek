@@ -16,7 +16,12 @@ import java.util.regex.Pattern;
 @Service
 public class VpnService {
 
-    private static final String WG_CONTAINER = "has-wireguard-server-1";
+    /**
+     * Fixed by {@code container_name} in docker-compose.yml. Without it the name
+     * would follow the compose project name and break unless started with
+     * {@code -p has}.
+     */
+    private static final String WG_CONTAINER = "has-wireguard-server";
     private static final String WG_INTERFACE = "wg0";
 
     /** WireGuard public keys: 32 bytes, base64-encoded. */

@@ -34,6 +34,8 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${PASSWORD}
       - POSTGRES_DB=has
+    volumes:
+      - db-data:/var/lib/postgresql/data
 
   adminer:
     image: adminer:latest
@@ -80,3 +82,10 @@ services:
   #networks:
   #  network:
   #    driver: bridge
+
+volumes:
+  # Named, so the data survives "docker compose down" (the image's anonymous
+  # volume would be replaced by an empty one). The fixed name keeps it
+  # independent of the project name. "down -v" deletes it on purpose.
+  db-data:
+    name: has-db-data

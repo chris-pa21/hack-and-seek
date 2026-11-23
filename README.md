@@ -1,6 +1,6 @@
 # 👾 Hack & Seek
 
-**Attack-Defense-CTF-Plattform – Diplomarbeit am TGM Wien**
+**Attack-Defense-CTF-Plattform**
 
 ![Java 21](https://img.shields.io/badge/Java-21-007396?logo=openjdk&logoColor=white)
 ![Spring Boot 3.5](https://img.shields.io/badge/Spring%20Boot-3.5-6DB33F?logo=springboot&logoColor=white)
@@ -175,6 +175,8 @@ Vollständige Liste: [docs/bekannte-einschraenkungen.md](docs/bekannte-einschrae
 | Florian Andrä | Container-Orchestrierung |
 | Yunus Eren | Spring-Backend |
 | Felix Bayerl | Datenbank |
+
+<sub>Entstanden als Diplomarbeit am TGM.</sub>
 
 ## Lizenz
 

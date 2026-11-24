@@ -100,7 +100,13 @@ braucht das Kernel-Modul des Hosts).
    startet der Container je nach Version nicht. Die gewählten Ports dürfen
    nicht schon belegt sein.
 
-3. Starten:
+3. Challenge-Images bauen (Compose baut sie nicht mit):
+
+   ```bash
+   for c in ping-me note-keeper leaky-blog; do docker build -t "$c" "images/$c"; done
+   ```
+
+4. Starten:
 
    ```bash
    docker compose up -d --build
@@ -108,7 +114,7 @@ braucht das Kernel-Modul des Hosts).
 
    Die Plattform ist dann unter `http://<host>:<FRONTEND_PORT>` erreichbar.
 
-4. Stoppen: `docker compose down`. Die Daten bleiben erhalten;
+5. Stoppen: `docker compose down`. Die Daten bleiben erhalten;
    `docker compose down -v` löscht auch die Datenbank.
 
 Nach außen offen sind nur das Frontend und der WireGuard-Port. Adminer

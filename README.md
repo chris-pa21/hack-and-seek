@@ -12,8 +12,8 @@
 
 ## Worum geht's?
 
-Bei Hack & Seek bekommt jedes Team einen identischen, absichtlich verwundbaren
-Container. Ziel ist es, die Schwachstellen der gegnerischen Container zu finden
+Bei Hack & Seek bekommt jedes Team einen eigenen, absichtlich verwundbaren
+Container; welche Challenge darin läuft, wird pro Team gewählt. Ziel ist es, die Schwachstellen der gegnerischen Container zu finden
 und deren Flags zu erbeuten – und gleichzeitig den eigenen Container
 abzusichern. Patchen ist erwünscht, das bloße Schließen von Ports oder ein
 kaputter Dienst wird bestraft. Jedes Spiel läuft in einem eigenen, über

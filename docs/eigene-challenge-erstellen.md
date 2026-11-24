@@ -10,9 +10,9 @@ Spiel baut man am besten eigene, die die Spieler noch nicht kennen.
 
 ## Was eine gute Challenge ausmacht
 
-Bei Attack-Defense ist jede Challenge Ziel und eigener Server zugleich: Jedes
-Team bekommt denselben Container, greift die der anderen an und muss den
-eigenen absichern. Daraus folgen ein paar Regeln:
+Bei Attack-Defense ist jede Challenge Ziel und eigener Server zugleich: Ein
+Team verteidigt seinen Container und greift die der anderen an, die dieselbe
+oder eine andere Challenge haben können. Daraus folgen ein paar Regeln:
 
 - **Die Schwachstelle muss patchbar sein.** Ein Team soll sie finden und
   beheben können, ohne den Dienst abzuschalten. Gut eignen sich Fehler im

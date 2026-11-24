@@ -132,6 +132,12 @@ Damit wird bestraft, was Attack-Defense verbietet: die Flag löschen, den
 Dienst abschalten oder ihn so „patchen“, dass er nicht mehr funktioniert.
 Was `healthcheck.sh` prüft, beschreibt [challenges.md](challenges.md).
 
+> **Einschränkung:** Weil die Prüfungen im Container laufen, in dem das Team
+> Root-Rechte hat, könnte ein Team `curl` oder `healthcheck.sh` durch
+> Versionen ersetzen, die immer Erfolg melden, und den Dienst danach
+> abschalten. Siehe
+> [bekannte-einschraenkungen.md](bekannte-einschraenkungen.md#das-monitoring-läuft-im-container-des-teams).
+
 ## 4. Beenden
 
 Ein Spiel endet auf zwei Wegen:

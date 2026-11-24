@@ -156,7 +156,7 @@ Mehr dazu: [docs/entwicklung.md](docs/entwicklung.md).
 | `has-frontend/` | Vue 3, Pinia, Tailwind CSS 4, Vite – Weboberfläche, Cypress-Tests |
 | `has-vpn/` | WireGuard-Server und VPN-Manager (Flask) für die Firewall-Regeln |
 | `images/` | Challenge-Images `ping-me`, `note-keeper`, `leaky-blog` |
-| `docs/` | technische Dokumentation |
+| `docs/` | technische Dokumentation, alte englische Fassung in `docs/archiv/` |
 
 ## Bekannte Einschränkungen
 

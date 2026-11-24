@@ -1,3 +1,8 @@
+> **Archiv – veraltet.** Diese englische Dokumentation stammt aus einem
+> früheren Stand des Projekts und wird nicht mehr gepflegt; einige Angaben
+> (z. B. Ports und Umgebungsvariablen) stimmen nicht mehr. Die aktuelle
+> Dokumentation liegt in [docs/](../) und im [README](../../README.md).
+
 # Hack & Seek — Project Documentation
 
 ## Table of Contents

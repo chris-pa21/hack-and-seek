@@ -8,6 +8,7 @@
 ![PostgreSQL 15](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 ![WireGuard](https://img.shields.io/badge/WireGuard-VPN-88171A?logo=wireguard&logoColor=white)
+![Lizenz: MIT](https://img.shields.io/badge/Lizenz-MIT-yellow)
 
 ## Worum geht's?
 
@@ -186,4 +187,5 @@ Vollständige Liste: [docs/bekannte-einschraenkungen.md](docs/bekannte-einschrae
 
 ## Lizenz
 
-Folgt.
+[MIT](LICENSE) © 2025–2026 Christian Parushev, Andreas Maurer, Florian Andrä,
+Yunus Eren, Felix Bayerl
